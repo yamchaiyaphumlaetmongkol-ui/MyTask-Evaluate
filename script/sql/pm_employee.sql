@@ -1,0 +1,11 @@
+id
+employee_code
+title_name
+first_name
+last_name
+email
+position_code
+role_code
+active
+created_date
+updated_date

@@ -1,0 +1,2 @@
+/** Placeholder Server Action */
+export {};

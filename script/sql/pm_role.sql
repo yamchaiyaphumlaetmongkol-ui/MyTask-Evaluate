@@ -1,0 +1,9 @@
+id
+role_code
+role_name
+role_level
+role_description
+role_status
+active
+created_date
+updated_date

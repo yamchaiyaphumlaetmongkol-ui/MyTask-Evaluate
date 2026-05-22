@@ -1,0 +1,116 @@
+{
+  "profileLabel": "Evaluate",
+  "rows": [
+    {
+      "id": "home",
+      "parentId": null,
+      "type": "page",
+      "path": "/",
+      "label": "หน้าแรก",
+      "icon": "bi-house",
+      "sortOrder": 1
+    },
+      {
+      "id": "pm",
+      "parentId": null,
+      "type": "folder",
+      "path": null,
+      "label": "จัดการข้อมูลพนักงาน",
+      "icon": "bi-people",
+      "code": "PMMS",
+      "sortOrder": 30
+    },
+    {
+      "id": "pmms01",
+      "parentId": "pm",
+      "type": "page",
+      "path": "/pm/pmms01",
+      "label": "เพิ่มข้อมูลพนักงาน",
+      "sortOrder": 1
+    },
+    {
+      "id": "pmms02",
+      "parentId": "pm",
+      "type": "page",
+      "path": "/pm/pmms02",
+      "label": "เพิ่มบทบาทพนักงาน",
+      "sortOrder": 2
+    },
+    {
+      "id": "pmms03",
+      "parentId": "pm",
+      "type": "page",
+      "path": "/pm/pmms03",
+      "label": "เพิ่มตำแหน่งงาน",
+      "sortOrder": 3
+    },
+    {
+      "id": "pmms04",
+      "parentId": "pm",
+      "type": "page",
+      "path": "/pm/pmms04",
+      "label": "จัดการสิทธิ์การเข้าถึง",
+      "sortOrder": 3
+    },
+    {
+      "id": "pe",
+      "parentId": null,
+      "type": "folder",
+      "path": null,
+      "label": "จัดการประเมินผลการปฏิบัติงาน",
+      "icon": "bi-clipboard-check",
+      "code": "PEMS",
+      "sortOrder": 40
+    },
+    {
+      "id": "pems01",
+      "parentId": "pe",
+      "type": "page",
+      "path": "/pe/pems01",
+      "label": "สร้างแบบประเมิน",
+      "sortOrder": 1
+    },
+    {
+      "id": "pems02",
+      "parentId": "pe",
+      "type": "page",
+      "path": "/pe/pems02",
+      "label": "ค้นหาแบบประเมิน",
+      "sortOrder": 2
+    },
+    {
+      "id": "ess",
+      "parentId": null,
+      "type": "folder",
+      "path": null,
+      "label": "จัดการบริการตนเองพนักงาน",
+      "icon": "bi-person-lines-fill",
+      "code": "ESSPEMS",
+      "sortOrder": 50
+    },
+    {
+      "id": "esspets01",
+      "parentId": "ess",
+      "type": "page",
+      "path": "/ess/esspets01",
+      "label": "ค้นหาแบบประเมินตนเอง",
+      "sortOrder": 1
+    },
+    {
+      "id": "esspets03",
+      "parentId": "ess",
+      "type": "page",
+      "path": "/ess/esspets03",
+      "label": "ติดตามสถานะการประเมิน",
+      "sortOrder": 2
+    },
+    {
+      "id": "esspets04",
+      "parentId": "ess",
+      "type": "page",
+      "path": "/ess/esspets04",
+      "label": "ค้นหาแบบประเมินพนักงาน",
+      "sortOrder": 3
+    }
+  ]
+}

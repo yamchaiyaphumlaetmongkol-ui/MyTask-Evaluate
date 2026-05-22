@@ -1,0 +1,24 @@
+{
+  "rows": [
+    {
+      "menuId": "home",
+      "sortOrder": 1
+    },
+    {
+      "menuId": "pmms01",
+      "sortOrder": 2
+    },
+    {
+      "menuId": "pmms02",
+      "sortOrder": 3
+    },
+    {
+      "menuId": "pems01",
+      "sortOrder": 4
+    },
+    {
+      "menuId": "esspmts01",
+      "sortOrder": 5
+    }
+  ]
+}

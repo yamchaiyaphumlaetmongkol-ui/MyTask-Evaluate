@@ -1,0 +1,6 @@
+id
+manager_code
+employee_code
+active
+created_date
+updated_date
