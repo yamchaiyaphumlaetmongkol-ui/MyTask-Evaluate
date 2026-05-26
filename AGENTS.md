@@ -10,6 +10,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+## อ่านก่อนแตะโค้ด (บังคับสำหรับ Cursor / Agent)
+
+**ลำดับ:** ไฟล์นี้ (`AGENTS.md`) → **[docs/THEME.md](./docs/THEME.md)** → **[docs/UI-STANDARDS.md](./docs/UI-STANDARDS.md)** → [SKILL.md](./SKILL.md) (เมื่อแตะ Next.js / form array)
+
+| หัวข้อ | ไฟล์ |
+|--------|------|
+| กฎโปรเจกต์, directory, ห้ามทำ | `AGENTS.md` (นี่) |
+| **สี ขาว–เขียว, ปุ่ม, panel หุบได้** | **`docs/THEME.md`** |
+| **โครงสร้างหน้า, field, ตาราง, คอมโพเนนต์ซ้ำ** | **`docs/UI-STANDARDS.md`** |
+| RSC, Server Actions, PEMS01 form | `SKILL.md` |
+
+**UI ใหม่:** ใช้โทน `--erp-green-*`, คอมโพเนนต์ **`src/components/erp/`** (`ErpPageTitle`, `ErpField`, `ErpDataTable`, …) และ `ErpCollapsePanel` — **ห้าม** สีน้ำเงิน Bootstrap ดั้งเดิม / Tailwind / MUI / `<table className="table-light">`
+
+**ถ้าไม่เข้าใจความต้องการ (โดยเฉพาะโมเดลข้อมูล / UX): ถามผู้ใช้จนกว่าจะเข้าใจ — อย่าเดาแล้ว implement ผิดโครงสร้าง**
+
+---
+
 ## เป้าหมายโปรเจกต์
 
 ERP ประเมินผลงาน แยกโมดูล **PM** (ข้อมูลพนักงาน), **PE** (แบบประเมิน), **ESS** (บริการตนเอง)  
@@ -21,7 +38,8 @@ ERP ประเมินผลงาน แยกโมดูล **PM** (ข้
 
 | ทำ | ห้าม |
 |-----|------|
-| UI ด้วย **Bootstrap 5** classes | Tailwind / shadcn / MUI ในคอมโพเนนต์ใหม่ |
+| UI ด้วย **Bootstrap 5** + โทน **[docs/THEME.md](./docs/THEME.md)** | Tailwind / shadcn / MUI ในคอมโพเนนต์ใหม่ |
+| ฟอร์มซ้อน → **`ErpCollapsePanel`** (หุบได้) | การ์ด `border-primary` น้ำเงิน / panel ไม่มี theme |
 | Business logic ใน `src/api/{module}/{screen}/` | Logic ยาวใน `page.tsx` หรือ `src/app/api/` |
 | เมนูจาก `menu.json` + `getMenu()` | Hard-code sidebar links ใน component |
 | Server Actions (`"use server"`) สำหรับ mutate/read ฝั่ง server | REST route ใหม่ใน `app/api/` สำหรับ domain |
@@ -32,13 +50,36 @@ ERP ประเมินผลงาน แยกโมดูล **PM** (ข้
 
 ---
 
+## Next.js App Router — รูปแบบที่ใช้ในโปรเจกต์
+
+อ่านรายละเอียดเต็มใน **[SKILL.md](./SKILL.md)**
+
+| ชั้น | ใส่ `"use client"`? | ตัวอย่าง |
+|------|---------------------|----------|
+| `page.tsx` | **ไม่** | `async` โหลดจาก `_queries.ts` แล้ว render |
+| `components/.../tables/*` | **ไม่** | `<table>` + `Link` + ข้อความจาก props |
+| `components/.../*AddSection` | **ใช่** | ปุ่ม + modal + `router.refresh()` |
+| `api/.../_queries.ts` | **ไม่** | Prisma อ่านอย่างเดียว |
+| `api/.../save_*.ts` | **`"use server"`** | Zod + `revalidatePath` |
+
+**ห้าม:** ห่อทั้งหน้าจอใน client แล้ว `useEffect` เรียก `get_*` โหลด list — ให้ server โหลดครั้งเดียวตอนเปิดหน้า
+
+**URL:** ส่งเฉพาะ id ใน query (`?headId=1`) — ชื่อหัวข้อดึงจาก DB บน server
+
+---
+
 ## สัญญา directory (Program-Driven)
 
 ```
-src/app/(main)/{module}/{screen}/page.tsx     ← UI only
-src/api/{module}/{screen}/types.ts
-src/api/{module}/{screen}/get_*.ts            ← read
-src/api/{module}/{screen}/save_*.ts           ← write (หรือ publish_*, delete_* ตามความหมาย)
+src/app/(main)/{module}/{screen}/page.tsx     ← Server Component (โหลด + จัด layout)
+src/api/{module}/{screen}/
+  _queries.ts                                 ← อ่าน DB (ไม่มี "use server")
+  get_*..ts                                    ← ห่อ _queries สำหรับ client (ถ้าจำเป็น)
+  save_*.ts                                     ← mutate + revalidatePath
+  types.ts
+src/components/{module}/
+  tables/                                     ← Server tables
+  *AddSection.tsx / *Form.tsx                 ← Client islands
 ```
 
 `{module}` = `pm` | `pe` | `ess`  
@@ -92,17 +133,50 @@ src/api/{module}/{screen}/save_*.ts           ← write (หรือ publish_*,
 
 ### PE — `src/api/pe/`
 
-| Screen | Route | Actions |
-|--------|-------|---------|
-| pems01 | `/pe/pems01` | get_template, save_template |
-| pems02 | `/pe/pems02` | get_criteria, save_criteria |
+| Screen | Route | โครงสร้างปัจจุบัน |
+|--------|-------|-------------------|
+| pems01 | `/pe/pems01?q=` | รายการแบบประเมิน + ค้นหาชื่อ (Server GET) |
+| pems01 | `/pe/pems01/form` | สร้างแบบประเมิน — ชื่อ + HEAD หลายรายการ + SUB + DETAIL |
+| pems01 | `/pe/pems01/form?templateId=` | แก้ไขแบบประเมิน (โหลด HEAD ทั้งหมดในชุด) |
+| pems02 | `/pe/pems02` | get_criteria, save_criteria (placeholder) |
 | pems03 | *(ไม่มี page)* | publish_template — **ลบหรือเพิ่ม route ให้ตรง** |
+
+**Actions (pems01):** `_queries.ts`, `save_template_bundle.ts`, `_permission.ts`
+
+#### PEMS01 — โมเดลข้อมูล (สำคัญ)
+
+```
+pe_evaluation_template
+  └── pe_evaluation_head
+        └── pe_evaluation_sub   ← grade_criteria (JSON เกณฑ์เกรด แสดงใน ESS) + min/max คะแนน
+              └── pe_evaluation_result   ← แถวเดียวต่อ sub+พนักงาน
+                    self_score, self_detail (ESSPETS02)
+                    manager_score, manager_detail (ESSPETS04)
+```
+
+- **grade_criteria** บน `pe_evaluation_sub` = เงื่อนไขเกรด (แสดงใน ESS)
+- **pe_evaluation_result** = คอลัมน์ self_* และ manager_* ในแถวเดียว
+- อัปเกรด DB: `09_upgrade_pe_sub_result.sql`, `10_upgrade_pe_result_self_manager.sql`
+
+- **แบบประเมิน** = ชุดที่รวมหัวข้อหลัก (HEAD) หลายอัน
+- หน้า form: ชื่อแบบประเมิน + HEAD[] + SUB + เกณฑ์เกรด → `save_template_bundle`
+- SQL ใหม่: `script/sql/pe_evaluation_template.sql`, อัปเกรด: `05_upgrade_pe_evaluation_template.sql`
+
+#### PEMS01 — form (implement แล้ว)
+
+- List: `Pems01TemplateTable` · Form: `EvaluationTemplateForm` + `ErpCollapsePanel`
+- Query: `queryEvaluationTemplates`, `queryTemplateFormInitial(templateId?)`
+- สิทธิ์ role/ตำแหน่ง: ที่ **head** เท่านั้น
+- v1: ลบแถวออกจากฟอร์มยังไม่ลบใน DB
 
 ### ESS — **ชื่อจริงใน app: `esspets*`**
 
 | Screen | Route | หมายเหตุ |
 |--------|-------|----------|
-| esspets01–04 | `/ess/esspets0N` | มี `page.tsx` |
+| esspets01 | `/ess/esspets01?q=` | ค้นหาแบบประเมิน → esspets02 |
+| esspets02 | `/ess/esspets02?templateId=&employeeCode=` | self_score / self_detail |
+| esspets03 | `/ess/esspets03?q=` | ติดตามสถานะ — list หัวข้อหลัก → `?headId=&employeeCode=` ดูคะแนนแต่ละ sub |
+| esspets04 | `/ess/esspets04?managerCode=&q=` | ตารางผู้ self แล้ว → manager_score / manager_detail |
 | esspmts01–03 | — | โฟลเดอร์ `api/ess/esspmts*` **ล้าสมัย** — rename เป็น `esspets*` ก่อน implement |
 
 ---
@@ -135,15 +209,24 @@ export async function saveSomething(raw: unknown) {
 
 ---
 
-## UI components (ใช้ของเดิมก่อนสร้างใหม่)
+## UI & Theme (ขาว–เขียว)
+
+**อ่านเต็ม:** [docs/THEME.md](./docs/THEME.md)
+
+| รายการ | ที่อยู่ |
+|--------|---------|
+| ตัวแปรสี `--erp-green-*` | `src/app/globals.css` |
+| Override Bootstrap primary/success | `globals.css` (`:root`) |
+| Panel หุบได้ | `components/shared/ErpCollapsePanel.tsx` + `.erp-panel*` |
 
 | โฟลเดอร์ | ใช้เมื่อ |
 |----------|---------|
 | `components/ui/` | Button, Input, Modal, AppLoading |
-| `components/shared/` | BaseTable, FilterBar — **รับ props เท่านั้น** ไม่ fetch |
+| `components/shared/` | BaseTable, FilterBar, **ErpCollapsePanel** |
 | `components/layout/` | Shell, Sidebar, Header |
 
-**Bootstrap JS:** ต้องการ collapse/modal → มี `BootstrapScripts` ใน root layout แล้ว
+**ปุ่ม:** บันทึก/เพิ่ม → `success` หรือ `primary` (ทั้งคู่เป็นเขียวหลัง override) · ลบ → `danger`  
+**Bootstrap JS:** modal ใน root layout (`BootstrapScripts`) — panel หุบใช้ state ใน `ErpCollapsePanel` ไม่พึ่ง collapse JS
 
 ---
 
@@ -160,10 +243,12 @@ export async function saveSomething(raw: unknown) {
 
 ## Database (Prisma)
 
-- Schema: `User`, `Employee` ใน `prisma/schema.prisma`
-- **ยังไม่เชื่อม** กับ Server Actions
-- **Recommendation:** implement ทีละจอ PM ก่อน (Employee CRUD) แล้วค่อย PE/ESS  
-**Risk:** push schema โดยไม่มี migration strategy ใน production — ใช้ `db push` แค่ dev
+- Schema: `prisma/schema.prisma` — `pm_*`, `pe_*` ตรง `script/sql/`
+- Client: `src/lib/prisma.ts`
+- อ่าน: `_queries.ts` จาก Server page
+- เขียน: `save_*.ts` + `revalidatePath`
+- SQL ติดตั้ง: `script/sql/00_install.sql`, อัปเกรด: `03_upgrade_pe_permissions.sql`
+- **Risk:** production ควรมี migration strategy — dev ใช้ `db push` / psql script
 
 ---
 
@@ -189,5 +274,7 @@ npm run lint
 
 ## เอกสารเพิ่ม
 
+- **[docs/THEME.md](./docs/THEME.md)** — โทนขาว–เขียว, ปุ่ม, panel, checklist UI
+- **[SKILL.md](./SKILL.md)** — ลักษณะการเขียน Next.js + แบบ form array PEMS01
 - **[README.md](./README.md)** — ภาพรวม, checklist, tech debt
 - **[src/data/README.md](./src/data/README.md)** — schema `menu.json` / `favorites.json`

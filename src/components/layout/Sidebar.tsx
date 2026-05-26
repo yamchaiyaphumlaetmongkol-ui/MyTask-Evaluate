@@ -4,15 +4,18 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import type { MenuConfig } from "@/api/navigation/types";
 import { findExpandedIdsForPath } from "@/api/navigation/build-menu-tree";
+import type { EmployeeOption } from "@/api/_shared/employee-options";
 import { SidebarFavoritesList } from "@/components/layout/SidebarFavoritesList";
 import { SidebarMenuTree } from "@/components/layout/SidebarMenuTree";
+import { SidebarUserSelect } from "@/components/layout/SidebarUserSelect";
 import { useSidebarStore } from "@/store/sidebarStore";
 
 interface SidebarProps {
   menu: MenuConfig;
+  employees: EmployeeOption[];
 }
 
-export function Sidebar({ menu }: SidebarProps) {
+export function Sidebar({ menu, employees }: SidebarProps) {
   const pathname = usePathname();
   const collapsed = useSidebarStore((s) => s.collapsed);
   const menuTab = useSidebarStore((s) => s.menuTab);
@@ -35,10 +38,7 @@ export function Sidebar({ menu }: SidebarProps) {
         className={`erp-sidebar ${collapsed ? "is-collapsed" : ""}`}
         aria-label="เมนูหลัก"
       >
-        <div className="erp-sidebar-profile">
-          <i className="bi bi-person-circle fs-4 flex-shrink-0" />
-          <span className="profile-label">{menu.profileLabel}</span>
-        </div>
+        <SidebarUserSelect employees={employees} />
 
         <div className="erp-sidebar-tabs-wrap">
           <ul className="erp-sidebar-tabs nav nav-tabs border-0">

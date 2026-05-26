@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { EvalNotificationBell } from "@/components/layout/EvalNotificationBell";
 import { APP_CONFIG } from "@/lib/app-config";
 import { useSidebarStore } from "@/store/sidebarStore";
+import { Button } from "../ui/Button";
 
 export function AppHeader() {
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
@@ -43,9 +45,8 @@ export function AppHeader() {
         </div>
 
         <div className="d-flex align-items-center flex-shrink-0 ms-auto">
-          <span className="badge text-bg-light border text-secondary">
-            v{APP_CONFIG.version}
-          </span>
+          <EvalNotificationBell />
+          <Button variant="dark" size="sm" className="fw-bold">LOGIN</Button>
         </div>
       </header>
     </>

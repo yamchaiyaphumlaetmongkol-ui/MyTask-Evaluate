@@ -45,14 +45,6 @@
       "sortOrder": 3
     },
     {
-      "id": "pmms04",
-      "parentId": "pm",
-      "type": "page",
-      "path": "/pm/pmms04",
-      "label": "จัดการสิทธิ์การเข้าถึง",
-      "sortOrder": 3
-    },
-    {
       "id": "pe",
       "parentId": null,
       "type": "folder",
@@ -69,14 +61,6 @@
       "path": "/pe/pems01",
       "label": "สร้างแบบประเมิน",
       "sortOrder": 1
-    },
-    {
-      "id": "pems02",
-      "parentId": "pe",
-      "type": "page",
-      "path": "/pe/pems02",
-      "label": "ค้นหาแบบประเมิน",
-      "sortOrder": 2
     },
     {
       "id": "ess",

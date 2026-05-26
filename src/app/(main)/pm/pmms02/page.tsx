@@ -1,7 +1,12 @@
-export default function Pmms02Page() {
+import { queryRoles } from "@/api/pm/pmms02/_queries";
+import { RoleFormSection } from "@/components/pm/RoleFormSection";
+import { PageContent } from "@/components/layout/PageContent";
+
+export default async function Pmms02Page() {
+  const rows = await queryRoles();
   return (
-    <main className="container-fluid py-4">
-      <h1>Pmms02</h1>
-    </main>
+    <PageContent>
+      <RoleFormSection rows={rows} />
+    </PageContent>
   );
 }

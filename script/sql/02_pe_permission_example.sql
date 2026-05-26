@@ -1,0 +1,12 @@
+-- ตัวอย่างบันทึกสิทธิ์หลังสร้างหัวข้อหลัก id = 1
+-- แก้ไขได้: ทุก role + ตำแหน่ง P01, P02
+-- ประเมินได้: role R01, R02 + ทุกตำแหน่ง
+
+-- INSERT INTO pe_evaluation_permission (entity_type, entity_id, permission_type, target_type, target_code, is_all)
+-- VALUES
+--   ('head', 1, 'edit',   'role',     NULL, TRUE),
+--   ('head', 1, 'edit',   'position', 'P01', FALSE),
+--   ('head', 1, 'edit',   'position', 'P02', FALSE),
+--   ('head', 1, 'evaluate','role',    'R01', FALSE),
+--   ('head', 1, 'evaluate','role',    'R02', FALSE),
+--   ('head', 1, 'evaluate','position', NULL, TRUE);

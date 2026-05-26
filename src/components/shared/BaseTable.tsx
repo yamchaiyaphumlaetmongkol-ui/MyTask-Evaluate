@@ -1,13 +1,16 @@
-import { cn } from "@/lib/utils";
+import { ErpDataTable, type ErpColumn } from "@/components/erp";
 import type { ReactNode } from "react";
 
+/** @deprecated ใช้ `ErpDataTable` จาก `@/components/erp` แทน — ดู docs/UI-STANDARDS.md */
 export interface Column<T> {
   key: string;
   header: string;
   render: (row: T) => ReactNode;
   className?: string;
+  headerClassName?: string;
 }
 
+/** @deprecated ใช้ `ErpDataTable` จาก `@/components/erp` แทน */
 export interface BaseTableProps<T> {
   columns: Column<T>[];
   data: T[];
@@ -17,52 +20,28 @@ export interface BaseTableProps<T> {
   hover?: boolean;
 }
 
+/** @deprecated ใช้ `ErpDataTable` จาก `@/components/erp` แทน */
 export function BaseTable<T>({
   columns,
   data,
   keyExtractor,
-  emptyMessage = "ไม่มีข้อมูล",
-  striped = true,
-  hover = true,
+  emptyMessage,
+  striped,
+  hover,
 }: BaseTableProps<T>) {
+  const erpColumns: ErpColumn<T>[] = columns.map((col) => ({
+    ...col,
+    render: (row, _index) => col.render(row),
+  }));
+
   return (
-    <div className="table-responsive">
-      <table
-        className={cn(
-          "table align-middle mb-0",
-          striped && "table-striped",
-          hover && "table-hover",
-        )}
-      >
-        <thead className="table-light">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className={col.className}>
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className="text-center text-muted py-4">
-                {emptyMessage}
-              </td>
-            </tr>
-          ) : (
-            data.map((row) => (
-              <tr key={keyExtractor(row)}>
-                {columns.map((col) => (
-                  <td key={col.key} className={col.className}>
-                    {col.render(row)}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <ErpDataTable
+      columns={erpColumns}
+      data={data}
+      rowKey={keyExtractor}
+      emptyMessage={emptyMessage}
+      striped={striped}
+      hover={hover}
+    />
   );
 }

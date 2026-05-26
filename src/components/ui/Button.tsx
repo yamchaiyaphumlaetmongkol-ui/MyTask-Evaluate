@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "success" | "danger" | "outline-primary" | "outline-secondary" | "link";
+type Variant = "primary" | "secondary" | "success" | "danger" | "outline-primary" | "outline-secondary" | "link" | "light" | "dark";
 
 const variantClass: Record<Variant, string> = {
   primary: "btn-primary",
@@ -11,6 +11,8 @@ const variantClass: Record<Variant, string> = {
   "outline-primary": "btn-outline-primary",
   "outline-secondary": "btn-outline-secondary",
   link: "btn-link",
+  light: "btn-light",
+  dark: "btn-dark",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

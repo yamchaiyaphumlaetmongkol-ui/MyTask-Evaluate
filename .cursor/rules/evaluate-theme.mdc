@@ -1,0 +1,16 @@
+---
+description: Evaluate ERP — อ่าน AGENTS.md และธีมขาวเขียวก่อนแก้โค้ด
+alwaysApply: true
+---
+
+ก่อน implement หรือแก้ UI ในโปรเจกต์นี้:
+
+1. อ่าน `AGENTS.md` (กฎโปรเจกต์, โมเดล PEMS01, directory)
+2. อ่าน `docs/THEME.md` (สี `--erp-green-*`, ปุ่ม, `ErpCollapsePanel`)
+3. เมื่อแตะ Next.js / PEMS01 form → อ่าน `SKILL.md`
+
+**ถ้าไม่เข้าใจความต้องการ: ถามผู้ใช้จนกว่าจะเข้าใจ — อย่าเดา schema (เช่น สับแบบประเมินกับ HEAD)**
+
+PEMS01: `pe_evaluation_template` (ชื่อแบบประเมิน) → `pe_evaluation_head` (FK) → sub → detail
+
+ห้าม Tailwind / MUI / สีน้ำเงิน Bootstrap ดั้งเดิม — ใช้ Bootstrap 5 + คลาส `erp-*` ตาม THEME.md

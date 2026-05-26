@@ -8,15 +8,45 @@
   --erp-green-teal: #5ba491;
   --erp-green-light: #e8f3ed;
   --erp-green-gradient-end: #f5faf7;
-  --erp-header-height: 64px;
-  --erp-sidebar-width: 300px;
-  --erp-sidebar-collapsed: 72px;
+  --erp-border: #dce8e2;
+  --erp-header-height: clamp(3.25rem, 6vh, 4rem);
+  /* sidebar ~18% จอ ไม่เล็กกว่า 260px / ไม่ใหญ่เกิน 320px */
+  --erp-sidebar-width: clamp(260px, 18vw, 320px);
+  --erp-sidebar-collapsed: 4.5rem;
   --erp-top-accent: 4px;
+  /* ระยะขอบเนื้อหา — ตาม % จอ */
+  --erp-page-pad-x: clamp(1rem, 2.5vw, 2.75rem);
+  --erp-page-pad-y: clamp(1rem, 2.5vh, 2.5rem);
+
+  /* Bootstrap → โทนขาว–เขียว (ดู docs/THEME.md) */
+  --bs-primary: var(--erp-green-primary);
+  --bs-primary-rgb: 45, 122, 94;
+  --bs-success: var(--erp-green-profile);
+  --bs-success-rgb: 74, 144, 114;
+  --bs-link-color: var(--erp-green-primary);
+  --bs-link-hover-color: var(--erp-green-dark);
+  --bs-border-color: var(--erp-border);
+  --bs-focus-ring-color: rgba(45, 122, 94, 0.25);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
+}
+
+/* Shell — header/sidebar อยู่ที่เดิม เนื้อหา scroll แยก */
+.erp-app-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 /* Top accent strip */
@@ -32,6 +62,9 @@ body {
   background: #fff;
   border-bottom: 1px solid #e5ebe8;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1040;
 }
 
 .erp-brand-title {
@@ -71,21 +104,588 @@ body {
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .erp-content {
-  flex: 1;
+  flex: 1 1 auto;
+  width: 0;
   min-width: 0;
+  min-height: 0;
   background: #fff;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Sidebar */
+/* เนื้อหาหน้า — ระยะขอบตาม % จอ, ใช้ความกว้างเต็มพื้นที่ขวาของ sidebar */
+.erp-page-content {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--erp-page-pad-y) var(--erp-page-pad-x);
+}
+
+.erp-page-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* ตาราง / panel ในหน้าหลักขยายตามความกว้างที่เหลือ */
+.erp-page-inner .table-responsive,
+.erp-page-inner .erp-panel,
+.erp-page-inner .erp-search-panel,
+.erp-page-inner .card.erp-panel {
+  max-width: 100%;
+}
+
+.pe-permission-fields fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.pe-permission-fields legend {
+  float: none;
+  width: auto;
+}
+
+/* ——— Form panels (หุบได้) ——— */
+.erp-panel {
+  background: #fff;
+  border: 1px solid var(--erp-border);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 2px rgba(26, 83, 54, 0.06);
+}
+
+.erp-panel--head {
+  border-color: rgba(45, 122, 94, 0.35);
+}
+
+.erp-panel--head .erp-panel__header {
+  background: linear-gradient(
+    90deg,
+    var(--erp-green-light) 0%,
+    var(--erp-green-gradient-end) 100%
+  );
+  border-bottom: 1px solid var(--erp-border);
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.erp-panel--sub {
+  border-left: 3px solid var(--erp-green-primary);
+}
+
+.erp-panel--sub .erp-panel__header {
+  background: #fff;
+}
+
+.erp-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.75rem;
+}
+
+.erp-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.5rem;
+  margin: 0;
+  text-align: left;
+  color: var(--erp-green-dark);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.erp-panel__toggle:hover {
+  color: var(--erp-green-primary);
+}
+
+.erp-panel__chevron {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--erp-green-teal);
+}
+
+.erp-panel__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.erp-panel__body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.erp-panel--sub .erp-panel__body {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.text-erp-primary {
+  color: var(--erp-green-primary) !important;
+}
+
+.erp-table-head {
+  --bs-table-bg: var(--erp-green-light);
+  --bs-table-color: var(--erp-green-dark);
+}
+
+.erp-form-page-title {
+  color: var(--erp-green-dark);
+  font-weight: 700;
+}
+
+/* ช่องฟอร์มมาตรฐ — ใช้กับ ErpField */
+.erp-field .form-label {
+  margin-bottom: 0.35rem;
+  font-weight: 500;
+  color: var(--erp-green-dark);
+}
+
+/* ——— แผงค้นหา (กริด 6 คอลัมน์ + ปุ่มกึ่งกลาง) ——— */
+.erp-search-panel {
+  margin-bottom: 1.25rem;
+}
+
+.erp-search-panel--pending {
+  opacity: 0.92;
+}
+
+.erp-table-skeleton {
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.erp-table-skeleton__head {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--erp-green-light);
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-table-skeleton__row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.erp-table-skeleton__bar {
+  display: block;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+  background: linear-gradient(
+    90deg,
+    #eef4f0 0%,
+    #e2ebe6 45%,
+    #eef4f0 90%
+  );
+  background-size: 200% 100%;
+  animation: erp-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.erp-table-skeleton__bar--head {
+  height: 0.65rem;
+  opacity: 0.85;
+}
+
+.erp-table-block--loading {
+  opacity: 0.65;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+@keyframes erp-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.erp-search-panel__body {
+  padding: 1.25rem 1.5rem 1.35rem;
+}
+
+.erp-search-panel .erp-field {
+  margin-bottom: 0;
+}
+
+.erp-search-panel .form-control,
+.erp-search-panel .form-select,
+.erp-search-panel .erp-filter-select__trigger {
+  min-height: 2.375rem;
+}
+
+.erp-search-actions-row {
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+}
+
+.erp-search-actions .btn {
+  min-width: 5.75rem;
+  padding: 0.45rem 1.35rem;
+  font-weight: 500;
+}
+
+.erp-search-actions__submit {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.erp-search-actions__clear {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.erp-search-actions--clear-only .erp-search-actions__clear {
+  border-radius: 0.375rem;
+}
+
+/* ช่องกรอกตัวเลข — ไม่มี spinner ของ browser */
+.form-control[type="number"],
+.erp-number-input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.form-control[type="number"]::-webkit-inner-spin-button,
+.form-control[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.erp-input-number--sm {
+  max-width: 7.5rem;
+}
+
+.erp-badge-new {
+  background-color: var(--erp-green-profile) !important;
+}
+
+.erp-badge-edit {
+  background-color: var(--erp-green-teal) !important;
+  color: #fff !important;
+}
+
+.erp-eval-progress {
+  height: 0.65rem;
+  background: var(--erp-green-light);
+}
+
+/* ESSPETS03 — หน้ารายละเอียดสถานะการประเมิน */
+.erp-esspets03-detail__back {
+  margin-bottom: 1.25rem;
+}
+
+.erp-esspets03-detail__summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.25rem;
+}
+
+@media (max-width: 767.98px) {
+  .erp-esspets03-detail__summary {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.erp-esspets03-detail__meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.erp-esspets03-detail__meta-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.8125rem;
+  color: #6c757d;
+}
+
+.erp-esspets03-detail__meta-value {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #212529;
+  line-height: 1.45;
+}
+
+.erp-esspets03-detail__section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--erp-green-dark);
+}
+
+.erp-esspets03-detail__table .card-body {
+  padding: 0;
+}
+
+.erp-esspets03-detail__table-scroll {
+  margin: 0;
+}
+
+/* ตาราง matrix ประเมินตนเอง / ผู้บังคับบัญชา */
+.erp-eval-matrix {
+  table-layout: fixed;
+  width: 100%;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.erp-eval-matrix thead th {
+  padding: 0.5rem 0.65rem;
+  font-weight: 600;
+  vertical-align: middle;
+  border-color: var(--erp-border);
+  white-space: nowrap;
+}
+
+.erp-eval-matrix tbody td {
+  padding: 0.45rem 0.65rem;
+  vertical-align: middle;
+  border-color: var(--erp-border);
+}
+
+.erp-eval-matrix__col-seq {
+  width: 3.75rem;
+}
+
+.erp-eval-matrix__col-topic {
+  width: 22%;
+  min-width: 8rem;
+}
+
+.erp-eval-matrix__col-score {
+  width: 4.75rem;
+}
+
+.erp-eval-matrix__col-reason {
+  width: auto;
+}
+
+.erp-eval-matrix__reason-text {
+  display: block;
+  max-width: 100%;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.erp-eval-matrix__data-row--alt {
+  background-color: #fafcfb;
+}
+
+.erp-eval-matrix__head-row td {
+  padding: 0.55rem 0.75rem;
+  background: var(--erp-green-light);
+  color: var(--erp-green-dark);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-color: var(--erp-border);
+}
+
+/* ErpFilterSelect — dropdown ตัวกรอง (ค้นหาได้เมื่อรายการเยอะ) */
+.erp-filter-select {
+  position: relative;
+}
+
+.erp-filter-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  text-align: left;
+  color: #212529;
+  background-color: #fff;
+  border: 1px solid var(--erp-border);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.erp-filter-select__trigger:hover:not(:disabled) {
+  border-color: var(--erp-green-teal);
+}
+
+.erp-filter-select__trigger:focus-visible {
+  outline: 0;
+  border-color: var(--erp-green-primary);
+  box-shadow: 0 0 0 0.2rem rgba(45, 122, 94, 0.2);
+}
+
+.erp-filter-select--open .erp-filter-select__trigger {
+  border-color: var(--erp-green-primary);
+  box-shadow: 0 0 0 0.2rem rgba(45, 122, 94, 0.15);
+}
+
+.erp-filter-select__trigger--placeholder {
+  color: #6c757d;
+}
+
+.erp-filter-select--disabled .erp-filter-select__trigger {
+  cursor: not-allowed;
+  background-color: var(--bs-secondary-bg);
+  opacity: 0.85;
+}
+
+.erp-filter-select__chevron {
+  font-size: 0.8rem;
+  color: var(--erp-green-dark);
+  opacity: 0.85;
+}
+
+.erp-filter-select__menu {
+  position: absolute;
+  z-index: 1050;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--erp-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.erp-filter-select__search {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--erp-border);
+  background: var(--erp-green-gradient-end);
+}
+
+.erp-filter-select__search .input-group-text {
+  background: #fff;
+  border-color: var(--erp-border);
+  color: var(--erp-green-dark);
+}
+
+.erp-filter-select__search .form-control {
+  border-color: var(--erp-border);
+  font-size: 0.875rem;
+}
+
+.erp-filter-select__search .form-control:focus {
+  border-color: var(--erp-green-primary);
+  box-shadow: none;
+}
+
+.erp-filter-select__list {
+  max-height: 16rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.25rem 0;
+}
+
+.erp-filter-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.erp-filter-select__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-filter-select__option:hover {
+  background: var(--erp-green-light);
+}
+
+.erp-filter-select__option--active {
+  background: var(--erp-green-light);
+  color: var(--erp-green-dark);
+  font-weight: 600;
+}
+
+.erp-filter-select__check {
+  flex-shrink: 0;
+  font-size: 1rem;
+  color: var(--erp-green-primary);
+}
+
+.erp-filter-select__empty {
+  margin: 0;
+  padding: 0.85rem 0.75rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* @deprecated — ใช้ ErpFilterSelect แทน; คง class เดิมให้ wrapper เก่า */
+.erp-searchable-select {
+  position: relative;
+}
+
+.erp-emp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.erp-emp-avatar--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--erp-green-teal);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Sidebar — ความกว้างตาม % จอ (clamp ใน --erp-sidebar-width) */
 .erp-sidebar {
   width: var(--erp-sidebar-width);
+  min-width: var(--erp-sidebar-width);
+  flex: 0 0 var(--erp-sidebar-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
   background: linear-gradient(
     180deg,
     var(--erp-green-light) 0%,
@@ -99,35 +699,256 @@ body {
 
 .erp-sidebar.is-collapsed {
   width: var(--erp-sidebar-collapsed);
+  min-width: var(--erp-sidebar-collapsed);
+  flex: 0 0 var(--erp-sidebar-collapsed);
 }
 
-.erp-sidebar-profile {
+.erp-sidebar-profile,
+.erp-sidebar-user {
   background: linear-gradient(135deg, var(--erp-green-profile) 0%, var(--erp-green-primary) 100%);
   color: #fff;
-  padding: 1rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 56px;
+  padding: 0.85rem 0.85rem 0.75rem;
 }
 
-.erp-sidebar-profile .profile-label {
+.erp-sidebar-user--collapsed {
+  padding: 0.85rem 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.erp-sidebar-user-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.625rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(26, 83, 54, 0.12);
+}
+
+.erp-sidebar-user-card:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.erp-sidebar-user-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  outline-offset: 2px;
+}
+
+.erp-sidebar-user-card:disabled,
+.erp-sidebar-user-card--empty {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.erp-sidebar-user-card--icon-only {
+  width: auto;
+  padding: 0.35rem;
+  border-radius: 50%;
+  justify-content: center;
+}
+
+.erp-sidebar-user-card--loading {
+  cursor: default;
+}
+
+.erp-sidebar-user-card__text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.erp-sidebar-user-card__name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.erp-sidebar-user-card__code {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin-top: 0.1rem;
+}
+
+.erp-sidebar-user-card__chevron {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.erp-sidebar-user-card__avatar-skeleton {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.erp-sidebar-profile .profile-label,
+.erp-sidebar-user .profile-label {
   font-size: 0.95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Modal — เลือก user */
+.erp-user-picker-modal {
+  width: min(52rem, 94vw);
+  max-width: 94vw;
+  margin: 1.25rem auto;
+}
+
+.erp-user-picker-modal .modal-content {
+  min-height: min(38rem, 82dvh);
+  background: #fff;
+}
+
+.erp-user-picker-modal__body {
+  min-height: min(30rem, 68dvh);
+}
+
+.erp-user-picker-list {
+  max-height: min(58dvh, 32rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--erp-border);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.erp-user-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--erp-border);
+  background: #fff;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.erp-user-picker-item:last-child {
+  border-bottom: 0;
+}
+
+.erp-user-picker-item:hover {
+  background: var(--erp-green-light);
+}
+
+.erp-user-picker-item--pending {
+  background: var(--erp-green-light);
+  box-shadow: inset 4px 0 0 var(--erp-green-primary);
+}
+
+.erp-user-picker-item--current {
+  background: #f8faf9;
+}
+
+.erp-user-picker-item__name {
+  font-weight: 600;
+  color: var(--erp-green-dark);
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.erp-user-picker-item__badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.erp-user-picker-list--compact {
+  max-height: min(22dvh, 11rem);
+  flex-grow: 0;
+}
+
+.erp-user-picker-modal--with-setup .modal-content {
+  min-height: min(42rem, 88dvh);
+}
+
+.erp-user-picker-setup {
+  margin-top: 1rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--erp-border);
+  background: linear-gradient(
+    180deg,
+    var(--erp-green-light) 0%,
+    #fff 42%
+  );
+  box-shadow: 0 2px 12px rgba(45, 122, 94, 0.08);
+}
+
+.erp-user-picker-setup__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 8rem;
+}
+
+.erp-user-picker-setup-form__header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--erp-border);
+}
+
+.erp-user-picker-setup-form__title {
+  font-weight: 700;
+  color: var(--erp-green-dark);
+  font-size: 1.05rem;
+}
+
+.erp-user-picker-setup-selected {
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  border: 1px solid var(--erp-border);
+}
+
+/* บังคับเลือกผู้ใช้งานก่อนเข้าระบบ */
+.erp-entry-user-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1040;
+  background: rgba(15, 23, 42, 0.35);
+  pointer-events: auto;
+}
+
+.erp-entry-user-gate--loading {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--erp-body-bg, #f4f6f8);
+}
+
+.erp-entry-user-gate__content--blocked {
+  pointer-events: none;
+  user-select: none;
+  filter: blur(2px);
+}
+
 .erp-sidebar.is-collapsed .erp-sidebar-profile .profile-label,
+.erp-sidebar.is-collapsed .erp-sidebar-user-card__text,
+.erp-sidebar.is-collapsed .erp-sidebar-user-card__chevron,
 .erp-sidebar.is-collapsed .erp-sidebar-tabs-wrap,
 .erp-sidebar.is-collapsed .menu-label,
 .erp-sidebar.is-collapsed .menu-chevron {
   display: none;
 }
 
-.erp-sidebar.is-collapsed .erp-sidebar-profile {
-  justify-content: center;
-  padding: 1rem 0.5rem;
+.erp-sidebar.is-collapsed .erp-sidebar-user {
+  padding: 0.85rem 0.5rem;
 }
 
 .erp-sidebar-tabs-wrap {
@@ -167,7 +988,10 @@ body {
 
 .erp-sidebar-menu {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   padding: 0.5rem 0 1rem;
 }
 
@@ -342,4 +1166,18 @@ body {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
+}
+
+/* ClickUp import modal — รายการผู้ใช้เลื่อนได้ */
+.erp-clickup-import-list {
+  max-height: min(22rem, 48dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+}
+
+.erp-clickup-import-list__toolbar {
+  z-index: 2;
+  background: var(--bs-light);
 }

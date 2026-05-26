@@ -8,24 +8,224 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  passwordHash  String?
-  moduleAccess  String[]  @default([])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?  @map("password_hash")
+  moduleAccess String[] @default([]) @map("module_access")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("User")
 }
 
 model Employee {
   id           String   @id @default(cuid())
-  employeeCode String   @unique
-  firstName    String
-  lastName     String
+  employeeCode String   @unique @map("employee_code")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
   email        String   @unique
-  positionId   String?
-  roleId       String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  positionId   String?  @map("position_id")
+  roleId       String?  @map("role_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("Employee")
+}
+
+model PmRole {
+  id              BigInt   @id @default(autoincrement())
+  roleCode        String   @unique @map("role_code") @db.VarChar(50)
+  roleName        String   @map("role_name") @db.VarChar(200)
+  roleLevel       Int?     @map("role_level") @db.SmallInt
+  roleDescription String?  @map("role_description")
+  roleStatus      String?  @map("role_status") @db.VarChar(20)
+  active          Boolean  @default(true)
+  createdDate     DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate     DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  @@map("pm_role")
+}
+
+model PmPosition {
+  id           BigInt   @id @default(autoincrement())
+  positionCode String   @unique @map("position_code") @db.VarChar(50)
+  positionName String   @map("position_name") @db.VarChar(200)
+  description  String?
+  status       String?  @db.VarChar(20)
+  active       Boolean  @default(true)
+  createdDate  DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate  DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  @@map("pm_position")
+}
+
+model PmEmployee {
+  id                  BigInt   @id @default(autoincrement())
+  employeeCode        String?  @unique @map("employee_code") @db.VarChar(50)
+  titleName           String?  @map("title_name") @db.VarChar(50)
+  firstName           String   @map("first_name") @db.VarChar(100)
+  lastName            String   @map("last_name") @db.VarChar(100)
+  email               String   @unique @db.VarChar(255)
+  clickupUserId       String?  @unique @map("clickup_user_id") @db.VarChar(50)
+  clickupUsername     String?  @map("clickup_username") @db.VarChar(200)
+  clickupEmail        String?  @map("clickup_email") @db.VarChar(255)
+  clickupProfileImage String?  @map("clickup_profile_image")
+  positionCode        String?  @map("position_code") @db.VarChar(50)
+  roleCode            String?  @map("role_code") @db.VarChar(50)
+  active              Boolean  @default(true)
+  createdDate         DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate         DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  headsCreated     PeEvaluationHead[]     @relation("HeadCreatedBy")
+  subsCreated      PeEvaluationSub[]      @relation("SubCreatedBy")
+  evaluatedResults PeEvaluationResult[] @relation("EvaluatedEmployee")
+  managerResults   PeEvaluationResult[] @relation("ManagerEmployee")
+
+  @@map("pm_employee")
+}
+
+/** แม่แบบแบบประเมิน — โครงสร้างคำถาม/สิทธิ์ (ไม่ใช้ประเมินโดยตรง) */
+model PeEvaluationTemplateMaster {
+  id          BigInt   @id @default(autoincrement())
+  masterName  String   @map("master_name") @db.VarChar(300)
+  description String?
+  active      Boolean  @default(true)
+  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  blueprintHeads PeEvaluationMasterHead[]
+  rounds         PeEvaluationRound[]
+
+  @@map("pe_evaluation_template_master")
+}
+
+model PeEvaluationMasterHead {
+  id         BigInt   @id @default(autoincrement())
+  masterId   BigInt   @map("master_id")
+  headTopic  String   @map("head_topic") @db.VarChar(500)
+  proportion Decimal  @default(0) @db.Decimal(5, 2)
+  active     Boolean  @default(true)
+  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  master PeEvaluationTemplateMaster @relation(fields: [masterId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  subs   PeEvaluationMasterSub[]
+
+  @@index([masterId], map: "idx_pe_evaluation_master_head_master")
+  @@map("pe_evaluation_master_head")
+}
+
+model PeEvaluationMasterSub {
+  id           BigInt   @id @default(autoincrement())
+  masterHeadId BigInt   @map("master_head_id")
+  subTopic     String   @map("sub_topic") @db.VarChar(500)
+  minScore     Decimal  @default(0) @map("min_score") @db.Decimal(8, 2)
+  maxScore     Decimal  @default(0) @map("max_score") @db.Decimal(8, 2)
+  gradeCriteria Json    @default("[]") @map("grade_criteria")
+  active       Boolean  @default(true)
+  createdDate  DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate  DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  head PeEvaluationMasterHead @relation(fields: [masterHeadId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([masterHeadId], map: "idx_pe_evaluation_master_sub_head")
+  @@map("pe_evaluation_master_sub")
+}
+
+/** รอบที่เปิดใช้ — ปี/ครึ่งปี/วันที่/สถานะ + snapshot หัวข้อสำหรับประเมิน */
+model PeEvaluationRound {
+  id               BigInt    @id @default(autoincrement())
+  masterId         BigInt    @map("master_id")
+  roundName        String?   @map("round_name") @db.VarChar(300)
+  evaluationYear   Int       @map("evaluation_year")
+  evaluationPeriod String    @map("evaluation_period") @db.VarChar(10)
+  startDate        DateTime? @map("start_date") @db.Date
+  endDate          DateTime? @map("end_date") @db.Date
+  status           String    @default("open") @map("status") @db.VarChar(20)
+  active           Boolean   @default(true)
+  createdDate      DateTime  @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate      DateTime  @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  master PeEvaluationTemplateMaster @relation(fields: [masterId], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  heads  PeEvaluationHead[]
+
+  @@unique([masterId, evaluationYear, evaluationPeriod], map: "pe_evaluation_round_master_year_period_uq")
+  @@index([masterId], map: "idx_pe_evaluation_round_master")
+  @@map("pe_evaluation_round")
+}
+
+model PeEvaluationHead {
+  id                BigInt   @id @default(autoincrement())
+  peEvaluationRound BigInt   @map("pe_evaluation_round")
+  headTopic            String   @map("head_topic") @db.VarChar(500)
+  proportion           Decimal  @default(0) @db.Decimal(5, 2)
+  active               Boolean  @default(true)
+  createdBy            String?  @map("created_by") @db.VarChar(50)
+  createdDate          DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate          DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  round PeEvaluationRound @relation(fields: [peEvaluationRound], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  creator  PmEmployee?          @relation("HeadCreatedBy", fields: [createdBy], references: [employeeCode], onUpdate: Cascade, onDelete: SetNull)
+  subs     PeEvaluationSub[]
+
+  @@index([peEvaluationRound], map: "idx_pe_evaluation_head_round")
+  @@map("pe_evaluation_head")
+}
+
+model PeEvaluationSub {
+  id               BigInt   @id @default(autoincrement())
+  peEvaluationHead BigInt   @map("pe_evaluation_head")
+  subTopic         String   @map("sub_topic") @db.VarChar(500)
+  minScore         Decimal  @default(0) @map("min_score") @db.Decimal(8, 2)
+  maxScore         Decimal  @default(0) @map("max_score") @db.Decimal(8, 2)
+  gradeCriteria    Json     @default("[]") @map("grade_criteria")
+  active           Boolean  @default(true)
+  createdBy        String?  @map("created_by") @db.VarChar(50)
+  createdDate      DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate      DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  head    PeEvaluationHead     @relation(fields: [peEvaluationHead], references: [id], onUpdate: Cascade, onDelete: Restrict)
+  creator PmEmployee?          @relation("SubCreatedBy", fields: [createdBy], references: [employeeCode], onUpdate: Cascade, onDelete: SetNull)
+  results PeEvaluationResult[]
+
+  @@index([peEvaluationHead], map: "idx_pe_evaluation_sub_head")
+  @@map("pe_evaluation_sub")
+}
+
+model PeEvaluationResult {
+  id                  BigInt   @id @default(autoincrement())
+  peEvaluationSub       BigInt   @map("pe_evaluation_sub")
+  employeeCode          String   @map("employee_code") @db.VarChar(50)
+  selfScore             Decimal? @map("self_score") @db.Decimal(8, 2)
+  selfDetail            String?  @map("self_detail")
+  managerScore          Decimal? @map("manager_score") @db.Decimal(8, 2)
+  managerDetail         String?  @map("manager_detail")
+  managerEmployeeCode   String?  @map("manager_employee_code") @db.VarChar(50)
+  createdDate           DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate           DateTime @default(now()) @map("updated_date") @db.Timestamptz(6)
+
+  sub             PeEvaluationSub @relation(fields: [peEvaluationSub], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  employee        PmEmployee      @relation("EvaluatedEmployee", fields: [employeeCode], references: [employeeCode], onUpdate: Cascade, onDelete: Restrict)
+  managerEmployee PmEmployee?     @relation("ManagerEmployee", fields: [managerEmployeeCode], references: [employeeCode], onUpdate: Cascade, onDelete: SetNull)
+
+  @@unique([peEvaluationSub, employeeCode], map: "pe_evaluation_result_unique_uq")
+  @@index([peEvaluationSub], map: "idx_pe_evaluation_result_sub")
+  @@index([employeeCode], map: "idx_pe_evaluation_result_employee")
+  @@map("pe_evaluation_result")
+}
+
+model PeEvaluationPermission {
+  id             BigInt   @id @default(autoincrement())
+  entityType     String   @map("entity_type") @db.VarChar(20)
+  entityId       BigInt   @map("entity_id")
+  permissionType String   @map("permission_type") @db.VarChar(20)
+  targetType     String   @map("target_type") @db.VarChar(20)
+  targetCode     String?  @map("target_code") @db.VarChar(50)
+  isAll          Boolean  @default(false) @map("is_all")
+  createdDate    DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+
+  @@index([entityType, entityId], map: "idx_pe_evaluation_permission_entity")
+  @@map("pe_evaluation_permission")
 }

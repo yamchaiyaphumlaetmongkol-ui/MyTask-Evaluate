@@ -1,14 +1,12 @@
-import Link from "next/link";
+import { queryEmployeeOptions } from "@/api/_shared/employee-options";
 import { getMenu } from "@/api/navigation/get_menu";
 import { MainShell } from "@/components/layout/MainShell";
-import { getRootFolders } from "@/lib/navigation";
 
 export default async function RootPage() {
-  const menu = await getMenu();
-  const folders = getRootFolders(menu);
+  const [menu, employees] = await Promise.all([getMenu(), queryEmployeeOptions()]);
 
   return (
-    <MainShell menu={menu}>
+    <MainShell menu={menu} employees={employees}>
       <main className="container-fluid py-4">
         <h1>Home page</h1>
       </main>
