@@ -9,7 +9,12 @@ const { auth } = NextAuth({
   secret: env.AUTH_SECRET,
 });
 
-function resolveRequestOrigin(req: Parameters<typeof auth>[0]): string {
+type MiddlewareRequest = {
+  headers: Headers;
+  nextUrl: { origin: string };
+};
+
+function resolveRequestOrigin(req: MiddlewareRequest): string {
   const forwardedHost = req.headers.get("x-forwarded-host");
   const forwardedProto = req.headers.get("x-forwarded-proto");
 
