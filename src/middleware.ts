@@ -1,13 +1,5 @@
-import NextAuth from "next-auth";
-import { NextResponse } from "next/server";
-
-import { env } from "@/lib/env";
-import { authConfig } from "@/server/auth/auth.config";
-
-const { auth } = NextAuth({
-  ...authConfig,
-  secret: env.AUTH_SECRET,
-});
+import { getToken } from "next-auth/jwt";
+import { NextResponse, type NextRequest } from "next/server";
 
 type MiddlewareRequest = {
   headers: Headers;
@@ -26,9 +18,13 @@ function resolveRequestOrigin(req: MiddlewareRequest): string {
   return req.nextUrl.origin;
 }
 
-export default auth((req) => {
+export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
-  const isLoggedIn = Boolean(req.auth);
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  });
+  const isLoggedIn = Boolean(token);
 
   if (nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
@@ -46,7 +42,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
