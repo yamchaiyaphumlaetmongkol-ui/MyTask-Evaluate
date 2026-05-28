@@ -76,7 +76,7 @@ export function UserPickerEmployeeSetupForm({
 
     const employee: EmployeeOption = {
       id: data.id,
-      code: res.employeeCode,
+      code: res.data.employeeCode,
       name: employeeDisplayName({
         titleName: form.titleName,
         firstName: form.firstName.trim(),
