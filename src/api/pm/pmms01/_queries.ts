@@ -3,7 +3,16 @@ import { prisma } from "@/lib/prisma";
 import type { EmployeeEditData, EmployeeRow } from "@/api/pm/pmms01/types";
 
 export async function queryEmployees(): Promise<EmployeeRow[]> {
-  const [rows, roles, positions] = await Promise.all([
+  const identityBinding = (prisma as unknown as { userIdentityBinding?: unknown })
+    .userIdentityBinding as
+    | {
+        findMany: (args: {
+          select: { employeeId: true; loginEmail: true };
+        }) => Promise<Array<{ employeeId: bigint; loginEmail: string }>>;
+      }
+    | undefined;
+
+  const [rows, roles, positions, bindings] = await Promise.all([
     prisma.pmEmployee.findMany({
       where: { active: true },
       orderBy: { id: "asc" },
@@ -16,10 +25,16 @@ export async function queryEmployees(): Promise<EmployeeRow[]> {
       where: { active: true },
       select: { positionCode: true, positionName: true },
     }),
+    identityBinding
+      ? identityBinding.findMany({
+          select: { employeeId: true, loginEmail: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const roleMap = new Map(roles.map((r) => [r.roleCode, r.roleName]));
   const posMap = new Map(positions.map((p) => [p.positionCode, p.positionName]));
+  const bindingMap = new Map(bindings.map((b) => [String(b.employeeId), b.loginEmail]));
 
   return rows.map((e) => ({
     id: String(e.id),
@@ -31,6 +46,7 @@ export async function queryEmployees(): Promise<EmployeeRow[]> {
     clickupUserId: e.clickupUserId,
     clickupUsername: e.clickupUsername,
     clickupProfileImage: e.clickupProfileImage,
+    boundLoginEmail: bindingMap.get(String(e.id)) ?? null,
     roleCode: e.roleCode,
     roleName: e.roleCode ? roleMap.get(e.roleCode) ?? null : null,
     positionCode: e.positionCode,

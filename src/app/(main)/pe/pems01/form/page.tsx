@@ -43,17 +43,6 @@ export default async function Pems01FormPage({ searchParams }: Props) {
     loadError = "ไม่สามารถโหลดข้อมูลได้ — รัน script/sql/05_upgrade_pe_evaluation_template.sql แล้ว prisma db push";
   }
 
-  if (!templateId) {
-    return (
-      <PageContent>
-        <div className="alert alert-info">
-          สร้างรอบใหม่จากแม่แบบ — เลือกแม่แบบแล้วกด &quot;เปิดรอบประเมินใหม่&quot;
-        </div>
-        <BackLink href="/pe/pems01/masters">ไปที่แม่แบบแบบประเมิน</BackLink>
-      </PageContent>
-    );
-  }
-
   if (loadError) {
     return (
       <PageContent>
@@ -66,7 +55,7 @@ export default async function Pems01FormPage({ searchParams }: Props) {
   return (
     <PageContent>
       <div className="mb-3">
-        <BackLink href="/pe/pems01">กลับรายการแบบประเมิน</BackLink>
+        <BackLink href="/pe/pems01">กลับรายการรอบประเมิน</BackLink>
       </div>
       <EvaluationTemplateForm
         initialState={initialState}

@@ -2,12 +2,12 @@
 
 import type { EmployeeOption } from "@/api/_shared/employee-options";
 import { EmployeeAvatar } from "@/components/pm/EmployeeAvatar";
-import { UserPickerModal } from "@/components/layout/UserPickerModal";
 import { useStoreHydrated } from "@/hooks/useStoreHydrated";
 import { useCurrentUserStore } from "@/store/currentUserStore";
 import { useSidebarStore } from "@/store/sidebarStore";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo } from "react";
 
 type Props = {
   employees: EmployeeOption[];
@@ -25,7 +25,6 @@ export function SidebarUserSelect({ employees }: Props) {
   const employeeName = useCurrentUserStore((s) => s.employeeName);
   const profileImage = useCurrentUserStore((s) => s.profileImage);
   const setCurrentUser = useCurrentUserStore((s) => s.setCurrentUser);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const current = useMemo(
     () => employees.find((e) => e.id === employeeId),
@@ -72,25 +71,19 @@ export function SidebarUserSelect({ employees }: Props) {
     );
   }
 
-  const openPicker = () => {
-    if (employees.length === 0) return;
-    setModalOpen(true);
-  };
-
   return (
     <>
       <div className={cn("erp-sidebar-user", collapsed && "erp-sidebar-user--collapsed")}>
-        <button
-          type="button"
+        <Link
+          href="/profile"
           className={cn(
             "erp-sidebar-user-card",
+            "text-decoration-none",
             collapsed && "erp-sidebar-user-card--icon-only",
             employees.length === 0 && "erp-sidebar-user-card--empty",
           )}
-          onClick={openPicker}
-          disabled={employees.length === 0}
-          title={displayName || "เลือกผู้ใช้งาน"}
-          aria-label="เลือกผู้ใช้งาน"
+          title={displayName || "โปรไฟล์ผู้ใช้"}
+          aria-label="ไปหน้าโปรไฟล์ผู้ใช้"
         >
           <EmployeeAvatar
             src={displayImage}
@@ -114,16 +107,8 @@ export function SidebarUserSelect({ employees }: Props) {
               />
             </>
           )}
-        </button>
+        </Link>
       </div>
-
-      <UserPickerModal
-        open={modalOpen}
-        employees={employees}
-        selectedId={employeeId}
-        onClose={() => setModalOpen(false)}
-        onSelect={setCurrentUser}
-      />
     </>
   );
 }

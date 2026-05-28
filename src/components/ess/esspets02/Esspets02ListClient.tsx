@@ -24,10 +24,11 @@ export function Esspets02ListClient({
       filterOptions={filterOptions}
       showMaster={false}
     >
-      {(filter, isPending) => (
+      {(filter, isPending, refreshSignal) => (
         <Esspets02TemplatesBlock
           filter={filter}
           loading={isPending}
+          refreshSignal={refreshSignal}
           templateId={templateId}
           employeeCode={employeeCode}
         />

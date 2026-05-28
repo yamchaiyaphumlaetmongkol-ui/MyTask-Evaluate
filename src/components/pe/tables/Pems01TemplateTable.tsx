@@ -1,7 +1,12 @@
 "use client";
 
 import { deleteEvaluationTemplate } from "@/api/pe/pems01/delete_template";
+import { duplicateEvaluationTemplate } from "@/api/pe/pems01/duplicate_template";
 import type { EvaluationTemplateRow } from "@/api/pe/pems01/types";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { EVALUATION_PERIODS } from "@/lib/evaluation-period";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
 import { formatRoundStatus } from "@/lib/evaluation-round";
 import { formatThaiDate, formatThaiDateTime } from "@/lib/format-datetime";
@@ -18,12 +23,74 @@ type Props = {
 export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [sourceRound, setSourceRound] = useState<EvaluationTemplateRow | null>(null);
+  const [duplicateName, setDuplicateName] = useState("");
+  const [duplicateYear, setDuplicateYear] = useState(String(new Date().getFullYear()));
+  const [duplicatePeriod, setDuplicatePeriod] = useState<"H1" | "H2">("H1");
+  const [duplicateStartDate, setDuplicateStartDate] = useState("");
+  const [duplicateEndDate, setDuplicateEndDate] = useState("");
+  const [duplicateStatus, setDuplicateStatus] = useState<"draft" | "open" | "closed">(
+    "draft",
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const closeDuplicateModal = () => {
+    setSourceRound(null);
+    setDuplicatingId(null);
+  };
+
+  const openDuplicateModal = (row: EvaluationTemplateRow) => {
+    setSourceRound(row);
+    setDuplicateName(`${row.templateName} (คัดลอก)`);
+    setDuplicateYear(String(row.evaluationYear));
+    setDuplicatePeriod((row.evaluationPeriod === "H1" ? "H1" : "H2") as "H1" | "H2");
+    setDuplicateStartDate(row.startDate ?? "");
+    setDuplicateEndDate(row.endDate ?? "");
+    setDuplicateStatus("draft");
+    setError(null);
+  };
+
+  const handleDuplicate = async () => {
+    if (!sourceRound) return;
+    if (!duplicateName.trim()) {
+      setError("กรุณากรอกชื่อรอบใหม่");
+      return;
+    }
+    if (!duplicateStartDate || !duplicateEndDate) {
+      setError("กรุณาระบุวันเริ่มและวันสิ้นสุด");
+      return;
+    }
+    if (duplicateStartDate > duplicateEndDate) {
+      setError("วันเริ่มต้องไม่เกินวันสิ้นสุด");
+      return;
+    }
+
+    setDuplicatingId(sourceRound.id);
+    setError(null);
+    const res = await duplicateEvaluationTemplate({
+      sourceRoundId: sourceRound.id,
+      templateName: duplicateName.trim(),
+      evaluationYear: Number(duplicateYear),
+      evaluationPeriod: duplicatePeriod,
+      startDate: duplicateStartDate,
+      endDate: duplicateEndDate,
+      status: duplicateStatus,
+    });
+    setDuplicatingId(null);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    closeDuplicateModal();
+    router.push(`/pe/pems01/form?templateId=${encodeURIComponent(res.data.templateId)}`);
+    router.refresh();
+  };
 
   const handleDelete = async (row: EvaluationTemplateRow) => {
     if (
       !confirm(
-        `นำรอบ "${row.templateName}" ออกจากรายการ?\n\n(ปิดการใช้งาน — ผลประเมินเดิมยังเก็บไว้ในระบบ)`,
+        `ลบรอบ "${row.templateName}" ถาวร?\n\nการลบนี้จะลบข้อมูลที่เชื่อมกันทั้งหมดในฐานข้อมูล และไม่สามารถกู้คืนได้`,
       )
     ) {
       return;
@@ -100,6 +167,14 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
                     </Link>
                     <button
                       type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      disabled={Boolean(duplicatingId)}
+                      onClick={() => openDuplicateModal(row)}
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      type="button"
                       className="btn btn-danger btn-sm"
                       disabled={deletingId === row.id}
                       onClick={() => handleDelete(row)}
@@ -119,6 +194,100 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
           แสดง {rows.length} จาก {totalCount} แบบประเมิน
         </p>
       )}
+
+      <Modal
+        open={Boolean(sourceRound)}
+        title="Duplicate รอบประเมิน"
+        onClose={closeDuplicateModal}
+        size="lg"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={closeDuplicateModal}
+              disabled={Boolean(duplicatingId)}
+            >
+              ยกเลิก
+            </Button>
+            <Button variant="success" onClick={handleDuplicate} disabled={Boolean(duplicatingId)}>
+              {duplicatingId ? "กำลังทำสำเนา..." : "สร้างสำเนา"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-muted small">
+          ต้นฉบับ: <strong>{sourceRound?.templateName}</strong>
+        </p>
+        <Input
+          label="ชื่อรอบใหม่"
+          name="duplicateName"
+          value={duplicateName}
+          onChange={(e) => setDuplicateName(e.target.value)}
+        />
+        <div className="row g-3">
+          <div className="col-md-4">
+            <Input
+              type="number"
+              label="ปีประเมิน"
+              name="duplicateYear"
+              value={duplicateYear}
+              onChange={(e) => setDuplicateYear(e.target.value)}
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label" htmlFor="duplicatePeriod">
+              ช่วงประเมิน
+            </label>
+            <select
+              id="duplicatePeriod"
+              className="form-select"
+              value={duplicatePeriod}
+              onChange={(e) => setDuplicatePeriod(e.target.value as "H1" | "H2")}
+            >
+              {EVALUATION_PERIODS.map((period) => (
+                <option key={period.value} value={period.value}>
+                  {period.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label" htmlFor="duplicateStatus">
+              สถานะรอบ
+            </label>
+            <select
+              id="duplicateStatus"
+              className="form-select"
+              value={duplicateStatus}
+              onChange={(e) =>
+                setDuplicateStatus(e.target.value as "draft" | "open" | "closed")
+              }
+            >
+              <option value="draft">ร่าง</option>
+              <option value="open">เปิดประเมิน</option>
+              <option value="closed">ปิดรอบ</option>
+            </select>
+          </div>
+          <div className="col-md-6">
+            <Input
+              type="date"
+              label="วันเริ่ม"
+              name="duplicateStartDate"
+              value={duplicateStartDate}
+              onChange={(e) => setDuplicateStartDate(e.target.value)}
+            />
+          </div>
+          <div className="col-md-6">
+            <Input
+              type="date"
+              label="วันสิ้นสุด"
+              name="duplicateEndDate"
+              value={duplicateEndDate}
+              onChange={(e) => setDuplicateEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

@@ -3,12 +3,15 @@
 import { saveSelfEvalResult } from "@/api/ess/esspets02/save_self_result";
 import type { SelfEvalSession } from "@/api/ess/esspets02/types";
 import { EvalWizard } from "@/components/ess/EvalWizard";
+import { useRouter } from "next/navigation";
 
 type Props = {
   session: SelfEvalSession;
 };
 
 export function SelfEvalWizard({ session }: Props) {
+  const router = useRouter();
+
   return (
     <EvalWizard
       mode="self"
@@ -29,6 +32,11 @@ export function SelfEvalWizard({ session }: Props) {
         return res.ok
           ? { ok: true }
           : { ok: false, error: res.error };
+      }}
+      onDone={() => {
+        const nextHref = `/ess/esspets03?viewerCode=${encodeURIComponent(session.employeeCode)}`;
+        router.push(nextHref);
+        router.refresh();
       }}
     />
   );

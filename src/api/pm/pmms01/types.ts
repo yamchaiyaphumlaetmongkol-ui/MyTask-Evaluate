@@ -8,6 +8,7 @@ export type EmployeeRow = {
   clickupUserId: string | null;
   clickupUsername: string | null;
   clickupProfileImage: string | null;
+  boundLoginEmail: string | null;
   roleCode: string | null;
   roleName: string | null;
   positionCode: string | null;

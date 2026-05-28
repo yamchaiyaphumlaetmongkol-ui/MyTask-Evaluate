@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { persistLocalStorage } from "./persistStorage";
 
 export type TaskStatusFilter = "all" | "open" | "in_progress" | "done";
 
@@ -27,7 +28,7 @@ export const useTaskFilterStore = create<TaskFilterState>()(
     }),
     {
       name: "erp-task-filter",
-      storage: createJSONStorage(() => localStorage),
+      storage: persistLocalStorage,
       partialize: (s) => ({ status: s.status, search: s.search }),
     },
   ),

@@ -18,8 +18,12 @@ export function Esspets01PageClient({ filterOptions }: Props) {
       filterOptions={filterOptions}
       showMaster={false}
     >
-      {(filter, isPending) => (
-        <Esspets01TableBlock filter={filter} loading={isPending} />
+      {(filter, isPending, refreshSignal) => (
+        <Esspets01TableBlock
+          filter={filter}
+          loading={isPending}
+          refreshSignal={refreshSignal}
+        />
       )}
     </RoundListSearchShell>
   );

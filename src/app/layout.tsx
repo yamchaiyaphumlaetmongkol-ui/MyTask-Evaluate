@@ -3,8 +3,8 @@ import { BootstrapScripts } from "@/components/providers/BootstrapScripts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Evaluate",
-  description: "Evaluate",
+  title: "SS-Evaluate",
+  description: "SS-Evaluate",
 };
 
 export default function RootLayout({

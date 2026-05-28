@@ -15,9 +15,12 @@ export function Pems01TopActions({ filterOptions }: Props) {
   return (
     <>
       <div className="d-flex flex-wrap gap-2">
+        <Link href="/pe/pems01/form" className="btn btn-outline-success btn-lg">
+          + สร้างรอบประเมิน
+        </Link>
         <button
           type="button"
-          className="btn btn-primary btn-lg"
+          className="btn btn-success btn-lg"
           onClick={() => {
             setModalSeed((s) => s + 1);
             setOpen(true);
@@ -25,9 +28,6 @@ export function Pems01TopActions({ filterOptions }: Props) {
         >
           Upload Excel
         </button>
-        <Link href="/pe/pems01/masters" className="btn btn-outline-primary btn-lg">
-          แม่แบบแบบประเมิน
-        </Link>
       </div>
       <Pems01ExcelImportModal
         key={modalSeed}

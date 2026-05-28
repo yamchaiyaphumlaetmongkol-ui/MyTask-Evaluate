@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { persistLocalStorage } from "./persistStorage";
 
 export type SidebarMenuTab = "main" | "favorites";
 
@@ -55,7 +56,7 @@ export const useSidebarStore = create<SidebarState>()(
     }),
     {
       name: "erp-sidebar",
-      storage: createJSONStorage(() => localStorage),
+      storage: persistLocalStorage,
       partialize: (s) => ({
         collapsed: s.collapsed,
         expandedItemIds: s.expandedItemIds,

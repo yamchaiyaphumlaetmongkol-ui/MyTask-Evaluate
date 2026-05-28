@@ -16,7 +16,11 @@ type Props = {
   showStatus?: boolean;
   showMaster?: boolean;
   submitDisabled?: boolean;
-  children: (filter: RoundListFilter, isPending: boolean) => ReactNode;
+  children: (
+    filter: RoundListFilter,
+    isPending: boolean,
+    refreshSignal: RoundListFilterOptions,
+  ) => ReactNode;
 };
 
 /** ฟอร์มค้นหา + ตาราง — ตัวกรองไม่ขึ้น URL */
@@ -51,7 +55,7 @@ export function RoundListSearchShell({
         }
         onClear={clearFilter}
       />
-      {children(filter, isPending)}
+      {children(filter, isPending, filterOptions)}
     </>
   );
 }

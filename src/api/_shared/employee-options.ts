@@ -21,3 +21,56 @@ export async function queryEmployeeOptions(): Promise<EmployeeOption[]> {
     profileImage: e.clickupProfileImage,
   }));
 }
+
+/** พนักงานที่ผูกกับอีเมล login ปัจจุบัน */
+export async function queryEmployeeByLoginEmail(
+  email: string | null | undefined,
+): Promise<EmployeeOption | null> {
+  const loginEmail = email?.trim().toLowerCase();
+  if (!loginEmail) return null;
+
+  const identityBinding = (prisma as unknown as { userIdentityBinding?: unknown })
+    .userIdentityBinding as
+    | {
+        findUnique: (args: {
+          where: { loginEmail: string };
+          include: { employee: true };
+        }) => Promise<
+          | {
+              employee: {
+                id: bigint;
+                employeeCode: string | null;
+                firstName: string;
+                lastName: string;
+                titleName: string | null;
+                clickupUsername: string | null;
+                clickupProfileImage: string | null;
+                active: boolean;
+              };
+            }
+          | null
+        >;
+      }
+    | undefined;
+
+  if (!identityBinding) {
+    return null;
+  }
+
+  try {
+    const binding = await identityBinding.findUnique({
+      where: { loginEmail },
+      include: { employee: true },
+    });
+    if (!binding?.employee.active) return null;
+
+    return {
+      id: String(binding.employee.id),
+      code: binding.employee.employeeCode,
+      name: employeeDisplayName(binding.employee),
+      profileImage: binding.employee.clickupProfileImage,
+    };
+  } catch {
+    return null;
+  }
+}

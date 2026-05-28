@@ -1,10 +1,12 @@
 "use client";
 
+import { deleteMasterBlueprint } from "@/api/pe/pems01/delete_master_blueprint";
 import type { MasterBlueprintRow } from "@/api/pe/pems01/types";
 import { ClientTableFilterPanel } from "@/components/shared/ClientTableFilterPanel";
 import { filterBySelectValue, uniqueSelectOptions } from "@/lib/filter-rows";
 import { formatThaiDateTime } from "@/lib/format-datetime";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 type Props = {
@@ -12,7 +14,10 @@ type Props = {
 };
 
 export function Pems01MasterTable({ rows }: Props) {
+  const router = useRouter();
   const [masterId, setMasterId] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const masterOptions = useMemo(
     () =>
@@ -27,6 +32,27 @@ export function Pems01MasterTable({ rows }: Props) {
     () => filterBySelectValue(rows, masterId, (r) => r.id),
     [rows, masterId],
   );
+
+  const handleDelete = async (row: MasterBlueprintRow) => {
+    if (
+      !confirm(
+        `นำแม่แบบ "${row.masterName}" ออกจากรายการ?\n\n(เฉพาะแม่แบบที่ยังไม่ถูกใช้สร้างรอบประเมิน)`,
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(row.id);
+    setError(null);
+    const res = await deleteMasterBlueprint(row.id);
+    setDeletingId(null);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    router.refresh();
+  };
+
   if (filtered.length === 0 && rows.length === 0) {
     return (
       <p className="text-muted text-center py-4 mb-0">
@@ -38,6 +64,7 @@ export function Pems01MasterTable({ rows }: Props) {
 
   return (
     <>
+      {error && <div className="alert alert-danger py-2 small">{error}</div>}
       <ClientTableFilterPanel
         onClear={() => setMasterId("")}
         fields={[
@@ -75,12 +102,22 @@ export function Pems01MasterTable({ rows }: Props) {
               <td className="text-center">{row.headCount}</td>
               <td>{formatThaiDateTime(row.createdAt)}</td>
               <td className="text-center">
-                <Link
-                  href={`/pe/pems01/master/form?masterId=${encodeURIComponent(row.id)}`}
-                  className="btn btn-outline-primary btn-sm"
-                >
-                  แก้ไข / เปิดรอบ
-                </Link>
+                <div className="d-inline-flex flex-wrap gap-1 justify-content-center">
+                  <Link
+                    href={`/pe/pems01/master/form?masterId=${encodeURIComponent(row.id)}`}
+                    className="btn btn-outline-primary btn-sm"
+                  >
+                    แก้ไข / เปิดรอบ
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    disabled={deletingId === row.id}
+                    onClick={() => handleDelete(row)}
+                  >
+                    {deletingId === row.id ? "..." : "นำออก"}
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

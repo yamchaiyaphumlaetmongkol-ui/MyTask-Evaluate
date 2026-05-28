@@ -18,8 +18,12 @@ export function Pems01PageClient({ filterOptions }: Props) {
       filterOptions={filterOptions}
       showStatus
     >
-      {(filter, isPending) => (
-        <Pems01TableBlock filter={filter} loading={isPending} />
+      {(filter, isPending, refreshSignal) => (
+        <Pems01TableBlock
+          filter={filter}
+          loading={isPending}
+          refreshSignal={refreshSignal}
+        />
       )}
     </RoundListSearchShell>
   );

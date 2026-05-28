@@ -12,9 +12,14 @@ import { useEffect, useState, useTransition } from "react";
 type Props = {
   filter: RoundListFilter;
   loading?: boolean;
+  refreshSignal?: unknown;
 };
 
-export function Esspets01TableBlock({ filter, loading }: Props) {
+export function Esspets01TableBlock({
+  filter,
+  loading,
+  refreshSignal,
+}: Props) {
   const hydrated = useStoreHydrated();
   const employeeCode = useCurrentUserStore((s) => s.employeeCode);
   const [data, setData] = useState<Esspets01TablePayload | null>(null);
@@ -45,7 +50,7 @@ export function Esspets01TableBlock({ filter, loading }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filter, employeeCode, hydrated]);
+  }, [filter, employeeCode, hydrated, refreshSignal]);
 
   if (loading && !data) {
     return <ErpTableSkeleton columns={8} />;

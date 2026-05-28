@@ -82,8 +82,24 @@ model PmEmployee {
   subsCreated      PeEvaluationSub[]      @relation("SubCreatedBy")
   evaluatedResults PeEvaluationResult[] @relation("EvaluatedEmployee")
   managerResults   PeEvaluationResult[] @relation("ManagerEmployee")
+  identityBindings UserIdentityBinding[]
 
   @@map("pm_employee")
+}
+
+model UserIdentityBinding {
+  id             BigInt   @id @default(autoincrement())
+  loginEmail     String   @unique @map("login_email") @db.VarChar(255)
+  employeeId     BigInt   @unique @map("employee_id")
+  createdByEmail String?  @map("created_by_email") @db.VarChar(255)
+  updatedByEmail String?  @map("updated_by_email") @db.VarChar(255)
+  createdDate    DateTime @default(now()) @map("created_date") @db.Timestamptz(6)
+  updatedDate    DateTime @updatedAt @map("updated_date") @db.Timestamptz(6)
+
+  employee PmEmployee @relation(fields: [employeeId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([employeeId], map: "idx_user_identity_binding_employee")
+  @@map("user_identity_binding")
 }
 
 /** แม่แบบแบบประเมิน — โครงสร้างคำถาม/สิทธิ์ (ไม่ใช้ประเมินโดยตรง) */

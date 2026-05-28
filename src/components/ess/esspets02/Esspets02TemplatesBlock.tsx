@@ -10,6 +10,7 @@ import { useEffect, useState, useTransition } from "react";
 type Props = {
   filter: RoundListFilter;
   loading?: boolean;
+  refreshSignal?: unknown;
   templateId: string;
   employeeCode: string;
 };
@@ -17,6 +18,7 @@ type Props = {
 export function Esspets02TemplatesBlock({
   filter,
   loading,
+  refreshSignal,
   templateId,
   employeeCode,
 }: Props) {
@@ -44,7 +46,7 @@ export function Esspets02TemplatesBlock({
     return () => {
       cancelled = true;
     };
-  }, [filter]);
+  }, [filter, refreshSignal]);
 
   if (error) {
     return <ErpAlert>{error}</ErpAlert>;

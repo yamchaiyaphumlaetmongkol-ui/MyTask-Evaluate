@@ -5,8 +5,6 @@ import Link from "next/link";
 import { EvalNotificationBell } from "@/components/layout/EvalNotificationBell";
 import { APP_CONFIG } from "@/lib/app-config";
 import { useSidebarStore } from "@/store/sidebarStore";
-import { Button } from "../ui/Button";
-
 export function AppHeader() {
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const collapsed = useSidebarStore((s) => s.collapsed);
@@ -46,7 +44,9 @@ export function AppHeader() {
 
         <div className="d-flex align-items-center flex-shrink-0 ms-auto">
           <EvalNotificationBell />
-          <Button variant="dark" size="sm" className="fw-bold">LOGIN</Button>
+          <Link href="/auth/signout" className="btn btn-dark btn-sm fw-bold">
+            SIGN OUT
+          </Link>
         </div>
       </header>
     </>

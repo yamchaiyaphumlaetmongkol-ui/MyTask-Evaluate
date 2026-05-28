@@ -28,6 +28,7 @@ type Props = {
   doneMessage: string;
   scoreLabel?: string;
   detailLabel?: string;
+  onDone?: () => void;
 };
 
 export function EvalWizard({
@@ -40,6 +41,7 @@ export function EvalWizard({
   doneMessage,
   scoreLabel = "คะแนน",
   detailLabel = "รายละเอียด",
+  onDone,
 }: Props) {
   const total = steps.length;
   const [index, setIndex] = useState(0);
@@ -62,6 +64,7 @@ export function EvalWizard({
   const advanceStep = () => {
     if (index + 1 >= total) {
       setDone(true);
+      onDone?.();
       return;
     }
     setIndex((i) => i + 1);
@@ -89,11 +92,6 @@ export function EvalWizard({
       setError("กรุณากรอกคะแนน");
       return;
     }
-    if (mode === "self" && !detailTrimmed) {
-      setError("กรุณากรอกรายละเอียดให้ครบ");
-      return;
-    }
-
     setSaving(true);
     setError(null);
     const res = await onSave({

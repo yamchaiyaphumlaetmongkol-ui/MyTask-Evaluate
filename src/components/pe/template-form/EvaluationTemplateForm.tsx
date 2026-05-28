@@ -125,11 +125,10 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
           <h1 className="h4 mb-1 erp-form-page-title">
-            {mode === "edit" ? "แก้ไขรอบประเมิน" : "รอบประเมิน"}
+            {mode === "edit" ? "แก้ไขรอบประเมิน" : "สร้างรอบประเมิน"}
           </h1>
           <p className="text-muted small mb-0">
-            แก้ไข snapshot ของรอบที่เปิดใช้ — สร้างรอบใหม่จาก{" "}
-            <Link href="/pe/pems01/masters">แม่แบบ</Link>
+            จัดการโครงสร้างรอบประเมินโดยตรง และสามารถใช้ปุ่ม Duplicate จากหน้ารายการได้
           </p>
         </div>
         <div className="d-flex gap-2">

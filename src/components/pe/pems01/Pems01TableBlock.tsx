@@ -10,9 +10,10 @@ import { useEffect, useState, useTransition } from "react";
 type Props = {
   filter: RoundListFilter;
   loading?: boolean;
+  refreshSignal?: unknown;
 };
 
-export function Pems01TableBlock({ filter, loading }: Props) {
+export function Pems01TableBlock({ filter, loading, refreshSignal }: Props) {
   const [data, setData] = useState<Pems01TablePayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fetching, startFetch] = useTransition();
@@ -37,7 +38,7 @@ export function Pems01TableBlock({ filter, loading }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [filter]);
+  }, [filter, refreshSignal]);
 
   if (loading && !data) {
     return <ErpTableSkeleton columns={8} />;

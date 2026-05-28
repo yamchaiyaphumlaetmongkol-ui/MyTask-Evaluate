@@ -1,6 +1,7 @@
 import type { EmployeeOption } from "@/api/_shared/employee-options";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { persist } from "zustand/middleware";
+import { persistLocalStorage } from "./persistStorage";
 
 interface CurrentUserState {
   employeeId: string;
@@ -35,7 +36,7 @@ export const useCurrentUserStore = create<CurrentUserState>()(
     }),
     {
       name: "erp-current-user",
-      storage: createJSONStorage(() => localStorage),
+      storage: persistLocalStorage,
       partialize: (s) => ({
         employeeId: s.employeeId,
         employeeCode: s.employeeCode,

@@ -11,14 +11,16 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { filterBySearch } from "@/lib/filter-rows";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Props = {
   open: boolean;
   employees: EmployeeOption[];
   selectedId: string;
   onClose: () => void;
-  onSelect: (employee: EmployeeOption) => void;
+  onSelect: (
+    employee: EmployeeOption,
+  ) => Promise<{ ok: boolean; error?: string }> | { ok: boolean; error?: string };
   /** ปิดไม่ได้จนกว่าจะยืนยัน — ใช้ตอนเข้าระบบครั้งแรก */
   required?: boolean;
   /** ต้องมีรหัสก่อนใช้งาน — บังคับกรอกในขั้นตอนถัดไป */
@@ -48,20 +50,17 @@ export function UserPickerModal({
   const [step, setStep] = useState<Step>("list");
   const [search, setSearch] = useState("");
   const [pendingId, setPendingId] = useState(selectedId);
-  const [employees, setEmployees] = useState(employeesProp);
+  const [employeeOverrides, setEmployeeOverrides] = useState<
+    Record<string, EmployeeOption>
+  >({});
   const [savingSetup, setSavingSetup] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    setEmployees(employeesProp);
-  }, [employeesProp]);
-
-  useEffect(() => {
-    if (!open) return;
-    setStep("list");
-    setPendingId(selectedId);
-    setSearch("");
-    setSavingSetup(false);
-  }, [open, selectedId]);
+  const employees = useMemo(
+    () =>
+      employeesProp.map((employee) => employeeOverrides[employee.id] ?? employee),
+    [employeesProp, employeeOverrides],
+  );
 
   const filtered = useMemo(
     () =>
@@ -80,21 +79,27 @@ export function UserPickerModal({
     requireCode && pending && !pending.code,
   );
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!pending) return;
     if (!pending.code) {
       setStep("setup");
       return;
     }
-    onSelect(pending);
+    const result = await onSelect(pending);
+    if (!result.ok) {
+      setError(result.error ?? "บันทึกการผูกตัวตนไม่สำเร็จ");
+      return;
+    }
     if (!required) onClose();
   };
 
-  const handleSetupSuccess = (employee: EmployeeOption) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === employee.id ? employee : e)),
-    );
-    onSelect(employee);
+  const handleSetupSuccess = async (employee: EmployeeOption) => {
+    setEmployeeOverrides((prev) => ({ ...prev, [employee.id]: employee }));
+    const result = await onSelect(employee);
+    if (!result.ok) {
+      setError(result.error ?? "บันทึกการผูกตัวตนไม่สำเร็จ");
+      return;
+    }
     if (!required) onClose();
   };
 
@@ -165,6 +170,9 @@ export function UserPickerModal({
     >
       {step === "list" ? (
         <>
+          {error ? (
+            <div className="alert alert-danger py-2 small mb-3">{error}</div>
+          ) : null}
           {description ? (
             <p className="text-muted small mb-3">{description}</p>
           ) : null}

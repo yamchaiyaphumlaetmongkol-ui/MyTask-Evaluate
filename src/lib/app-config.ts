@@ -4,8 +4,17 @@ import packageJson from "../../package.json";
 export const APP_CONFIG = {
   name: packageJson.name,
   version: packageJson.version,
-  title: "Evaluate",
-  tagline: "Evaluate",
-  brandTitle: "Evaluate",
-  brandSub: "Evaluate",
+  title: "SS-Evaluate",
+  tagline: "ระบบประเมิน",
+  brandTitle: "กกน.",
+  brandSub: "ระบบประเมิน",
+  adminEmails: ["laetmongkol_y@softsquaregroup.com"],
 } as const;
+
+export function isAdminEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return APP_CONFIG.adminEmails.some(
+    (adminEmail) => adminEmail.toLowerCase() === normalized,
+  );
+}

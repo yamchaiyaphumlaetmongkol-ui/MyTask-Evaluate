@@ -1,8 +1,14 @@
 "use server";
 
 import { fail, ok, type ActionResult } from "@/api/_shared/action-result";
-import { buildPermissionRows, replacePermissions } from "@/api/pe/pems01/_permission";
+import {
+  buildPermissionRows,
+  loadPermissionsForMany,
+  replacePermissions,
+} from "@/api/pe/pems01/_permission";
+import { getCurrentIdentityActor, mapIdentityError } from "@/lib/auth-identity";
 import type { TopicPermissionSelection } from "@/api/pe/pems01/types";
+import { templateHasEditAccess } from "@/lib/evaluation-permission";
 import {
   gradeCriteriaToJson,
   scoreRangeFromCriteria,
@@ -67,49 +73,106 @@ function parseFormDate(value: string): Date {
   return new Date(`${value.trim()}T12:00:00.000Z`);
 }
 
-export async function saveEvaluationTemplateBundle(
-  raw: unknown,
-): Promise<ActionResult<{ templateId: string; roundId: string; headIds: string[] }>> {
+export async function saveEvaluationTemplateBundle(raw: unknown): Promise<
+  ActionResult<{ templateId: string; roundId: string; headIds: string[] }>
+> {
   const parsed = BundleSchema.safeParse(raw);
   if (!parsed.success) {
     return fail(parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง");
   }
 
-  const { templateId, templateName, evaluationYear, evaluationPeriod, startDate, endDate, heads } =
-    parsed.data;
-
-  if (!templateId) {
-    return fail(
-      "ใช้บันทึกแม่แบบที่เมนูแม่แบบ หรือสร้างรอบใหม่ — ไม่สร้างรอบจากหน้านี้โดยตรง",
-    );
-  }
-
-  const roundPk = BigInt(templateId);
+  const {
+    templateId,
+    templateName,
+    evaluationYear,
+    evaluationPeriod,
+    startDate,
+    endDate,
+    heads,
+  } = parsed.data;
 
   try {
+    const actorContext = await getCurrentIdentityActor();
+    if (!actorContext.binding && !actorContext.isAdmin) {
+      return fail("ยังไม่พบการผูกตัวตน กรุณาเลือกผู้ใช้งาน");
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      const round = await tx.peEvaluationRound.findUnique({
-        where: { id: roundPk },
-      });
-      if (!round?.active) {
-        throw new Error("ROUND_NOT_FOUND");
-      }
-      if (round.status === "closed") {
-        throw new Error("ROUND_CLOSED");
-      }
+      let roundPk: bigint;
+      if (templateId) {
+        roundPk = BigInt(templateId);
+        const round = await tx.peEvaluationRound.findUnique({
+          where: { id: roundPk },
+        });
+        if (!round?.active) {
+          throw new Error("ROUND_NOT_FOUND");
+        }
+        if (round.status === "closed") {
+          throw new Error("ROUND_CLOSED");
+        }
 
-      await tx.peEvaluationRound.update({
-        where: { id: roundPk },
-        data: {
-          roundName: normalizeRoundNameForSave(templateName, evaluationYear),
-          evaluationPeriod,
-          evaluationYear,
-          startDate: parseFormDate(startDate),
-          endDate: parseFormDate(endDate),
-        },
-      });
+        const existingHeads = await tx.peEvaluationHead.findMany({
+          where: { peEvaluationRound: roundPk, active: true },
+          select: { id: true },
+        });
+        const existingHeadIds = existingHeads.map((head) => head.id);
+        if (existingHeadIds.length === 0) {
+          throw new Error("NO_HEAD_PERMISSION_SCOPE");
+        }
+        const permMap = await loadPermissionsForMany("head", existingHeadIds);
+        const perms = existingHeadIds.map(
+          (id) =>
+            permMap.get(String(id)) ?? {
+              editAllRoles: false,
+              editAllPositions: false,
+              evaluateAllRoles: false,
+              evaluateAllPositions: false,
+              editRoleCodes: [],
+              editPositionCodes: [],
+              evaluateRoleCodes: [],
+              evaluatePositionCodes: [],
+            },
+        );
+        const canEdit =
+          actorContext.isAdmin ||
+          templateHasEditAccess(perms, {
+            roleCode: actorContext.binding?.roleCode ?? null,
+            positionCode: actorContext.binding?.positionCode ?? null,
+          });
+        if (!canEdit) {
+          throw new Error("FORBIDDEN_EDIT");
+        }
 
-      const templatePk = roundPk;
+        await tx.peEvaluationRound.update({
+          where: { id: roundPk },
+          data: {
+            roundName: normalizeRoundNameForSave(templateName, evaluationYear),
+            evaluationPeriod,
+            evaluationYear,
+            startDate: parseFormDate(startDate),
+            endDate: parseFormDate(endDate),
+          },
+        });
+      } else {
+        const master = await tx.peEvaluationTemplateMaster.create({
+          data: {
+            masterName: templateName.trim(),
+            description: "สร้างจากหน้ารอบประเมิน",
+          },
+        });
+        const createdRound = await tx.peEvaluationRound.create({
+          data: {
+            masterId: master.id,
+            roundName: normalizeRoundNameForSave(templateName, evaluationYear),
+            evaluationYear,
+            evaluationPeriod,
+            startDate: parseFormDate(startDate),
+            endDate: parseFormDate(endDate),
+            status: "open",
+          },
+        });
+        roundPk = createdRound.id;
+      }
 
       const savedHeadIds: string[] = [];
 
@@ -122,7 +185,7 @@ export async function saveEvaluationTemplateBundle(
           await tx.peEvaluationHead.update({
             where: { id: headId },
             data: {
-              peEvaluationRound: templatePk,
+              peEvaluationRound: roundPk,
               headTopic: head.headTopic.trim(),
               proportion: head.proportion,
             },
@@ -131,7 +194,7 @@ export async function saveEvaluationTemplateBundle(
         } else {
           const created = await tx.peEvaluationHead.create({
             data: {
-              peEvaluationRound: templatePk,
+              peEvaluationRound: roundPk,
               headTopic: head.headTopic.trim(),
               proportion: head.proportion,
               createdBy: null,
@@ -174,8 +237,8 @@ export async function saveEvaluationTemplateBundle(
       }
 
       return {
-        templateId: String(templatePk),
-        roundId: String(templatePk),
+        templateId: String(roundPk),
+        roundId: String(roundPk),
         headIds: savedHeadIds,
       };
     });
@@ -190,6 +253,16 @@ export async function saveEvaluationTemplateBundle(
     }
     if (e instanceof Error && e.message === "ROUND_CLOSED") {
       return fail("รอบนี้ปิดแล้ว — แก้โครงสร้างไม่ได้");
+    }
+    if (e instanceof Error && e.message === "NO_HEAD_PERMISSION_SCOPE") {
+      return fail("ไม่สามารถตรวจสิทธิ์แก้ไขเอกสารได้");
+    }
+    if (e instanceof Error && e.message === "FORBIDDEN_EDIT") {
+      return fail("คุณไม่มีสิทธิ์แก้ไขเอกสารนี้");
+    }
+    const mapped = mapIdentityError(e);
+    if (!mapped.ok && mapped.error !== "เกิดข้อผิดพลาดในการตรวจสอบตัวตน") {
+      return mapped;
     }
     console.error("saveEvaluationTemplateBundle", e);
     return fail("บันทึกรอบประเมินไม่สำเร็จ");

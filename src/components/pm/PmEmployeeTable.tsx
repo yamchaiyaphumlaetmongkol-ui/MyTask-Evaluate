@@ -110,6 +110,7 @@ export function PmEmployeeTable({ rows, onDelete, deletingId }: Props) {
                 <th>รหัสพนักงาน</th>
                 <th>role</th>
                 <th>position</th>
+                <th>binding</th>
                 <th className="text-center">แก้ไข</th>
                 <th className="text-center">ลบ</th>
               </tr>
@@ -130,6 +131,13 @@ export function PmEmployeeTable({ rows, onDelete, deletingId }: Props) {
                   <td>{row.employeeCode || "—"}</td>
                   <td>{row.roleName ?? row.roleCode ?? "—"}</td>
                   <td>{row.positionName ?? row.positionCode ?? "—"}</td>
+                  <td>
+                    {row.boundLoginEmail ? (
+                      <span className="badge text-bg-success">{row.boundLoginEmail}</span>
+                    ) : (
+                      <span className="badge text-bg-secondary">unbound</span>
+                    )}
+                  </td>
                   <td className="text-center">
                     <Link
                       href={`/pm/pmms01/edit?id=${encodeURIComponent(row.id)}`}
