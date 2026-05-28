@@ -9,6 +9,18 @@ const { auth } = NextAuth({
   secret: env.AUTH_SECRET,
 });
 
+function resolveRequestOrigin(req: Parameters<typeof auth>[0]): string {
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+
+  if (forwardedHost) {
+    const proto = forwardedProto ?? "https";
+    return `${proto}://${forwardedHost}`;
+  }
+
+  return req.nextUrl.origin;
+}
+
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = Boolean(req.auth);
@@ -18,8 +30,13 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn) {
-    const signInUrl = new URL("/api/auth/signin", nextUrl.origin);
-    signInUrl.searchParams.set("callbackUrl", nextUrl.href);
+    const origin = resolveRequestOrigin(req);
+    const signInUrl = new URL("/api/auth/signin", origin);
+    const callbackUrl = new URL(
+      `${nextUrl.pathname}${nextUrl.search}`,
+      origin,
+    ).toString();
+    signInUrl.searchParams.set("callbackUrl", callbackUrl);
     return NextResponse.redirect(signInUrl);
   }
 
