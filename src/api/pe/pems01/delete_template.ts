@@ -4,7 +4,7 @@ import { fail, ok, type ActionResult } from "@/api/_shared/action-result";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-/** ปิดการใช้งานรอบประเมิน (soft delete) — templateId = roundId */
+/** ปิดการใช้งานรอบประเมิน (soft delete) — ข้อมูลและผลประเมินยังอยู่ใน DB */
 export async function deleteEvaluationTemplate(
   templateId: string,
 ): Promise<ActionResult<{ templateId: string }>> {
@@ -22,16 +22,6 @@ export async function deleteEvaluationTemplate(
     });
 
     if (!round?.active) return fail("ไม่พบรอบประเมิน");
-
-    const subIds = round.heads.flatMap((h) => h.subs.map((s) => s.id));
-    if (subIds.length > 0) {
-      const used = await prisma.peEvaluationResult.count({
-        where: { peEvaluationSub: { in: subIds } },
-      });
-      if (used > 0) {
-        return fail("ไม่สามารถลบได้ — มีผลการประเมินอ้างอิงรอบนี้แล้ว");
-      }
-    }
 
     await prisma.$transaction(async (tx) => {
       for (const head of round.heads) {
@@ -54,6 +44,10 @@ export async function deleteEvaluationTemplate(
 
     revalidatePath("/pe/pems01");
     revalidatePath("/pe/pems01/form");
+    revalidatePath("/ess/esspets01");
+    revalidatePath("/ess/esspets02");
+    revalidatePath("/ess/esspets03");
+    revalidatePath("/ess/esspets04");
     return ok({ templateId });
   } catch (e) {
     console.error("deleteEvaluationTemplate", e);

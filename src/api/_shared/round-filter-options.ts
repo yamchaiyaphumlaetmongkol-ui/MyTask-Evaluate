@@ -1,4 +1,5 @@
 import { evaluationYearOptions } from "@/lib/round-list-filter";
+import { formatRoundDisplayName } from "@/lib/round-name";
 import { prisma } from "@/lib/prisma";
 
 export type RoundFilterOption = { value: string; label: string };
@@ -38,9 +39,11 @@ export async function queryRoundListFilterOptions(): Promise<RoundListFilterOpti
 
   const rounds: RoundFilterOption[] = roundRows.map((r) => ({
     value: String(r.id),
-    label:
-      r.roundName?.trim() ||
-      `${r.master.masterName} ${r.evaluationYear} ${r.evaluationPeriod ?? ""}`.trim(),
+    label: formatRoundDisplayName(
+      r.roundName?.trim() || r.master.masterName,
+      r.evaluationYear,
+      r.evaluationPeriod,
+    ),
   }));
 
   const masters: RoundFilterOption[] = masterRows.map((m) => ({

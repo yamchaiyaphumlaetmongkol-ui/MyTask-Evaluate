@@ -6,6 +6,7 @@ import { queryTemplateList } from "@/api/_shared/template-list";
 import { parseGradeCriteria } from "@/lib/grade-criteria";
 import { toDateOnlyString } from "@/lib/template-search";
 import {
+  emptyTopicPermission,
   newClientKey,
   type EvaluationDetailDraft,
   type EvaluationHeadDraft,
@@ -15,6 +16,7 @@ import {
   type MasterBlueprintFormState,
   type MasterBlueprintRow,
   type PeMasters,
+  type TopicPermissionSelection,
 } from "@/api/pe/pems01/types";
 import { prisma } from "@/lib/prisma";
 
@@ -117,9 +119,11 @@ export async function queryTemplateFormInitial(
   if (!templateId) {
     return {
       templateName: "",
+      evaluationYear: new Date().getFullYear(),
       evaluationPeriod: "H1",
       startDate: "",
       endDate: "",
+      permissions: emptyTopicPermission(),
       heads: [],
     };
   }
@@ -143,21 +147,27 @@ export async function queryTemplateFormInitial(
   if (!round?.active) {
     return {
       templateName: "",
+      evaluationYear: new Date().getFullYear(),
       evaluationPeriod: "H1",
       startDate: "",
       endDate: "",
+      permissions: emptyTopicPermission(),
       heads: [],
     };
   }
 
   const heads = await Promise.all(round.heads.map((h) => headToDraft(h)));
+  const permissions: TopicPermissionSelection =
+    heads[0]?.permissions ?? emptyTopicPermission();
 
   return {
     templateId: String(round.id),
     templateName: round.roundName ?? "",
+    evaluationYear: round.evaluationYear,
     evaluationPeriod: round.evaluationPeriod ?? "H1",
     startDate: toDateOnlyString(round.startDate) ?? "",
     endDate: toDateOnlyString(round.endDate) ?? "",
+    permissions,
     heads,
   };
 }
@@ -184,7 +194,12 @@ export async function queryMasterFormInitial(
   masterId?: string,
 ): Promise<MasterBlueprintFormState> {
   if (!masterId) {
-    return { masterName: "", description: "", heads: [] };
+    return {
+      masterName: "",
+      description: "",
+      permissions: emptyTopicPermission(),
+      heads: [],
+    };
   }
 
   const master = await prisma.peEvaluationTemplateMaster.findUnique({
@@ -201,17 +216,25 @@ export async function queryMasterFormInitial(
   });
 
   if (!master?.active) {
-    return { masterName: "", description: "", heads: [] };
+    return {
+      masterName: "",
+      description: "",
+      permissions: emptyTopicPermission(),
+      heads: [],
+    };
   }
 
   const heads = await Promise.all(
     master.blueprintHeads.map((h) => headToDraft(h)),
   );
+  const permissions: TopicPermissionSelection =
+    heads[0]?.permissions ?? emptyTopicPermission();
 
   return {
     masterId: String(master.id),
     masterName: master.masterName,
     description: master.description ?? "",
+    permissions,
     heads,
   };
 }

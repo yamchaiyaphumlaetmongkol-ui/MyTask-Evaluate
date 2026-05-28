@@ -1,7 +1,6 @@
 "use client";
 
-import type { EvaluationHeadDraft, PeMasters } from "@/api/pe/pems01/types";
-import { RolePositionPermissionFields } from "@/components/pe/RolePositionPermissionFields";
+import type { EvaluationHeadDraft } from "@/api/pe/pems01/types";
 import { SubFormList } from "@/components/pe/template-form/SubFormBlock";
 import { ErpCollapsePanel } from "@/components/shared/ErpCollapsePanel";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +10,6 @@ import { Textarea } from "@/components/ui/Textarea";
 type Props = {
   head: EvaluationHeadDraft;
   index: number;
-  masters: PeMasters;
   onChange: (next: EvaluationHeadDraft) => void;
   onRemove: () => void;
 };
@@ -19,7 +17,6 @@ type Props = {
 export function HeadFormBlock({
   head,
   index,
-  masters,
   onChange,
   onRemove,
 }: Props) {
@@ -65,13 +62,6 @@ export function HeadFormBlock({
           />
         </div>
       </div>
-
-      <RolePositionPermissionFields
-        roles={masters.roles}
-        positions={masters.positions}
-        value={head.permissions}
-        onChange={(permissions) => onChange({ ...head, permissions })}
-      />
 
       <SubFormList head={head} onChange={onChange} />
     </ErpCollapsePanel>

@@ -12,6 +12,7 @@ import {
   ErpSearchPanel,
   ErpFilterSelect,
 } from "@/components/erp";
+import { RoundNameSearchInput } from "@/components/shared/RoundNameSearchInput";
 import { useStoreHydrated } from "@/hooks/useStoreHydrated";
 import { EVALUATION_PERIODS } from "@/lib/evaluation-period";
 import { MANAGER_EVAL_DOCUMENT_STATUSES } from "@/lib/manager-eval-document-status";
@@ -102,15 +103,12 @@ export function Esspets04SearchForm({
         </ErpSearchFilterCol>
 
         <ErpSearchFilterCol>
-          <ErpField label="ชื่อแบบประเมิน" htmlFor="esspets04-roundId">
-            <ErpFilterSelect
-              id="esspets04-roundId"
-              name="roundId"
-              options={options.rounds}
-              defaultValue={filter.roundId ?? ""}
-              searchPlaceholder="ค้นหาแบบประเมิน..."
-            />
-          </ErpField>
+          <RoundNameSearchInput
+            id="esspets04-roundNameQ"
+            label="ชื่อแบบประเมิน"
+            defaultValue={filter.roundNameQ ?? ""}
+            placeholder="พิมพ์ชื่อแบบประเมิน..."
+          />
         </ErpSearchFilterCol>
 
         <ErpSearchFilterCol>

@@ -3,6 +3,7 @@ import type { RoundListFilter } from "@/lib/round-list-filter";
 
 const ROUND_KEYS = [
   "roundId",
+  "roundNameQ",
   "masterId",
   "evaluationPeriod",
   "evaluationYear",

@@ -3,6 +3,7 @@
 import type { SelfEvalSession, TemplateOption } from "@/api/ess/esspets02/types";
 import { ErpAlert, ErpPageIntro, ErpPageTitle, ErpPanel } from "@/components/erp";
 import { SelfEvalWizard } from "@/components/ess/SelfEvalWizard";
+import { BackLink } from "@/components/shared/BackLink";
 import { SearchableSingleSelect } from "@/components/shared/SearchableSingleSelect";
 import { useStoreHydrated } from "@/hooks/useStoreHydrated";
 import { useCurrentUserStore } from "@/store/currentUserStore";
@@ -45,18 +46,13 @@ export function SelfEvalLauncher({
   if (session) {
     return (
       <>
-        <div className="mb-3 d-flex flex-wrap gap-2 align-items-center">
+        <div className="mb-3 d-flex flex-wrap gap-2 align-items-center justify-content-between">
           <span className="small text-muted">
             {session.employeeName}
             {session.positionName ? ` · ${session.positionName}` : ""} ·{" "}
             {session.templateName}
           </span>
-          <Link
-            href="/ess/esspets02"
-            className="btn btn-outline-secondary btn-sm"
-          >
-            เปลี่ยนแบบประเมิน
-          </Link>
+          <BackLink href="/ess/esspets01">เปลี่ยนแบบประเมิน</BackLink>
         </div>
         <SelfEvalWizard session={session} />
       </>
@@ -65,6 +61,9 @@ export function SelfEvalLauncher({
 
   return (
     <>
+      <div className="mb-3">
+        <BackLink href="/ess/esspets01">กลับเลือกแบบประเมิน</BackLink>
+      </div>
       <ErpPageTitle>ประเมินตนเอง</ErpPageTitle>
 
       {hydrated && !currentUserCode && (

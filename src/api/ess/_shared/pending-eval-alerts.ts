@@ -114,8 +114,11 @@ export async function queryPendingEvalAlerts(
 
   for (const g of groups.values()) {
     const total = templateSubTotals.get(g.templateId) ?? 0;
-    if (g.selfSubs.size === 0) continue;
-    if (total > 0 && g.mgrSubs.size >= total) continue;
+    // แจ้งเตือนเฉพาะแบบที่พนักงานส่งประเมินตนเองครบทุกหัวข้อแล้ว
+    // และผู้ประเมินยังไม่เริ่มประเมิน (สถานะ "รอประเมิน" เท่านั้น)
+    if (total <= 0) continue;
+    if (g.selfSubs.size < total) continue;
+    if (g.mgrSubs.size > 0) continue;
 
     alerts.push({
       id: `${g.employeeCode}|${g.templateId}`,

@@ -19,6 +19,33 @@ export function Esspets01TemplateTable({ rows, hasFilter, totalCount }: Props) {
       render: (row) => row.templateName,
     },
     {
+      key: "evaluationYear",
+      header: "ปีประเมิน",
+      headerClassName: "text-center",
+      className: "text-center",
+      render: (row) => row.evaluationYear,
+    },
+    {
+      key: "selfEvalStatus",
+      header: "สถานะประเมินตนเอง",
+      render: (row) =>
+        row.selfEvalStatusLabel ? (
+          <span
+            className={
+              row.selfEvalStatus === "complete"
+                ? "badge text-bg-success"
+                : row.selfEvalStatus === "incomplete"
+                  ? "badge text-bg-warning"
+                  : "badge text-bg-secondary"
+            }
+          >
+            {row.selfEvalStatusLabel}
+          </span>
+        ) : (
+          "—"
+        ),
+    },
+    {
       key: "evaluationPeriod",
       header: "ช่วงประเมิน",
       render: (row) => formatEvaluationPeriod(row.evaluationPeriod),

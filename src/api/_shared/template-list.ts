@@ -1,5 +1,4 @@
-import { formatEvaluationPeriod } from "@/lib/evaluation-period";
-import { formatRoundLabel } from "@/lib/evaluation-round";
+import { formatRoundDisplayName } from "@/lib/round-name";
 import { buildRoundSearchWhere } from "@/lib/round-search";
 import {
   toDateOnlyString,
@@ -35,10 +34,11 @@ export async function queryTemplateList(
   });
 
   return rounds.map((r) => {
-    const periodLabel = formatEvaluationPeriod(r.evaluationPeriod);
-    const displayName =
-      r.roundName?.trim() ||
-      formatRoundLabel(r.master.masterName, r.evaluationYear, r.evaluationPeriod, periodLabel);
+    const displayName = formatRoundDisplayName(
+      r.roundName?.trim() || r.master.masterName,
+      r.evaluationYear,
+      r.evaluationPeriod,
+    );
 
     return {
       id: String(r.id),

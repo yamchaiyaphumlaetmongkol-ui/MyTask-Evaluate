@@ -1,6 +1,7 @@
 "use client";
 
 import type { ManagerEvalQueueRow } from "@/api/ess/esspets04/types";
+import { exportEvaluationExcel } from "@/api/ess/esspets04/export_evaluation_excel";
 import { ErpDataTable, type ErpColumn } from "@/components/erp";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
 import { formatManagerEvalDocumentStatus } from "@/lib/manager-eval-document-status";
@@ -9,6 +10,7 @@ import { buildFilterQuery } from "@/lib/build-filter-query";
 import type { ManagerEvalQueueFilter } from "@/lib/manager-eval-queue-filter";
 import { hasManagerEvalQueueFilter } from "@/lib/manager-eval-queue-filter";
 import Link from "next/link";
+import { useState } from "react";
 
 type Props = {
   rows: ManagerEvalQueueRow[];
@@ -63,6 +65,7 @@ function statusBadgeClass(status: ManagerEvalQueueRow["documentStatus"]): string
 }
 
 export function Esspets04QueueTable({ rows, managerCode, filter }: Props) {
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
   if (!managerCode) {
     return (
       <p className="text-muted text-center py-4 mb-0">เลือกผู้ใช้งานก่อน</p>
@@ -118,17 +121,54 @@ export function Esspets04QueueTable({ rows, managerCode, filter }: Props) {
       className: "text-center",
       render: (row) =>
         row.canEvaluate ? (
-          <Link
-            href={evalHref(
-              managerCode,
-              row.employeeCode,
-              row.templateId,
-              filter,
-            )}
-            className="btn btn-success btn-sm"
-          >
-            ประเมิน
-          </Link>
+          <div className="d-inline-flex gap-1">
+            <Link
+              href={evalHref(
+                managerCode,
+                row.employeeCode,
+                row.templateId,
+                filter,
+              )}
+              className="btn btn-success btn-sm"
+            >
+              ประเมิน
+            </Link>
+            {row.documentStatus === "completed" ? (
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                disabled={exportingKey === `${row.employeeCode}|${row.templateId}`}
+                onClick={async () => {
+                  const key = `${row.employeeCode}|${row.templateId}`;
+                  setExportingKey(key);
+                  const res = await exportEvaluationExcel({
+                    managerCode,
+                    employeeCode: row.employeeCode,
+                    templateId: row.templateId,
+                  });
+                  setExportingKey(null);
+                  if (!res.ok) {
+                    alert(res.error);
+                    return;
+                  }
+                  const bytes = Uint8Array.from(atob(res.data.base64), (c) =>
+                    c.charCodeAt(0),
+                  );
+                  const blob = new Blob([bytes], { type: res.data.mimeType });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = res.data.fileName;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                {exportingKey === `${row.employeeCode}|${row.templateId}`
+                  ? "..."
+                  : "Export Excel"}
+              </button>
+            ) : null}
+          </div>
         ) : (
           <button
             type="button"

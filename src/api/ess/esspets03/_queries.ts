@@ -17,6 +17,7 @@ import {
   type EvaluationResultFields,
 } from "@/lib/evaluation-result";
 import type { RoundListFilter } from "@/lib/round-list-filter";
+import { SELF_RESULT_WHERE } from "@/lib/self-eval-completion";
 import { buildRoundSearchWhere } from "@/lib/round-search";
 import { toDateOnlyString } from "@/lib/template-search";
 import { prisma } from "@/lib/prisma";
@@ -75,10 +76,6 @@ const templateListInclude = {
       subs: { where: { active: true }, select: { id: true } },
     },
   },
-} as const;
-
-const selfResultWhere = {
-  OR: [{ selfScore: { not: null } }, { selfDetail: { not: null } }],
 } as const;
 
 type ManagerResultRow = EvaluationResultFields & {
@@ -145,7 +142,7 @@ async function queryTemplatesWithAnySelfResult(
             some: {
               active: true,
               results: {
-                some: { employeeCode, ...selfResultWhere },
+                some: { employeeCode, ...SELF_RESULT_WHERE },
               },
             },
           },
@@ -174,7 +171,7 @@ async function queryTemplatesWithSubmittedSelfEval(
     where: {
       employeeCode,
       peEvaluationSub: { in: subIds },
-      ...selfResultWhere,
+      ...SELF_RESULT_WHERE,
     },
     select: { peEvaluationSub: true },
   });

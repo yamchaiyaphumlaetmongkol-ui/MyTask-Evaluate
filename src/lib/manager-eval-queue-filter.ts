@@ -13,6 +13,7 @@ export type ManagerEvalQueueFilter = RoundListFilter & {
 
 const FILTER_PARAM_KEYS = [
   "roundId",
+  "roundNameQ",
   "masterId",
   "evaluationPeriod",
   "evaluationYear",
@@ -47,6 +48,7 @@ export function parseManagerEvalQueueFilter(
 ): ManagerEvalQueueFilter {
   const filter: ManagerEvalQueueFilter = {
     roundId: params.roundId?.trim() || params.templateId?.trim() || undefined,
+    roundNameQ: params.roundNameQ?.trim() || undefined,
     masterId: params.masterId?.trim() || undefined,
     evaluationPeriod: params.evaluationPeriod?.trim() || undefined,
     evaluationYear: params.evaluationYear?.trim() || undefined,
@@ -74,6 +76,7 @@ export function hasManagerEvalQueueFilter(
 ): boolean {
   return Boolean(
     filter.roundId ||
+      filter.roundNameQ ||
       filter.masterId ||
       filter.evaluationPeriod ||
       filter.evaluationYear ||
@@ -93,6 +96,12 @@ export function matchesManagerEvalQueueRow(
   }
   if (filter.roundId && row.templateId !== filter.roundId) {
     return false;
+  }
+  if (filter.roundNameQ) {
+    const q = filter.roundNameQ.toLowerCase();
+    if (!row.templateName.toLowerCase().includes(q)) {
+      return false;
+    }
   }
   if (
     filter.evaluationPeriod &&

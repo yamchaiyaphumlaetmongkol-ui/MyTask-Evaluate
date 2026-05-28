@@ -15,8 +15,9 @@ export type Esspets01TablePayload = {
 
 export async function fetchEsspets01Table(
   filter: RoundListFilter,
+  employeeCode?: string,
 ): Promise<Esspets01TablePayload> {
-  const rows = await queryEssTemplateSearch(filter);
+  const rows = await queryEssTemplateSearch(filter, employeeCode);
   const hasFilter = hasRoundListFilter(filter);
   const totalCount = hasFilter
     ? (await queryEssTemplateSearch()).length

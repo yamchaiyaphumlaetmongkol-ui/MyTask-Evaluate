@@ -8,6 +8,7 @@ export function parseRoundListSearchParams(
 ): RoundListFilter {
   return {
     roundId: (params.roundId ?? params.q ?? "").trim() || undefined,
+    roundNameQ: params.roundNameQ?.trim() || undefined,
     masterId: params.masterId?.trim() || undefined,
     evaluationPeriod: params.evaluationPeriod?.trim() || undefined,
     evaluationYear: params.evaluationYear?.trim() || undefined,

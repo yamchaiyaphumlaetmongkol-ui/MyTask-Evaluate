@@ -7,9 +7,11 @@ import {
   type EvaluationTemplateFormState,
   type PeMasters,
 } from "@/api/pe/pems01/types";
+import { RolePositionPermissionFields } from "@/components/pe/RolePositionPermissionFields";
 import { HeadFormBlock } from "@/components/pe/template-form/HeadFormBlock";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { NumberInput } from "@/components/ui/NumberInput";
 import { EVALUATION_PERIODS } from "@/lib/evaluation-period";
 import { ErpCollapsePanel } from "@/components/shared/ErpCollapsePanel";
 import Link from "next/link";
@@ -74,10 +76,15 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
       setError("กรุณาเลือกช่วงประเมิน (ครึ่งแรก/ครึ่งหลัง)");
       return;
     }
+    if (!Number.isFinite(form.evaluationYear) || form.evaluationYear < 2000) {
+      setError("กรุณาระบุปีประเมิน (ค.ศ.) ให้ถูกต้อง");
+      return;
+    }
 
     const payload = {
       templateId: form.templateId,
       templateName: name,
+      evaluationYear: form.evaluationYear,
       evaluationPeriod: form.evaluationPeriod,
       startDate: form.startDate.trim(),
       endDate: form.endDate.trim(),
@@ -85,7 +92,7 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
         id: h.id,
         headTopic: h.headTopic.trim(),
         proportion: h.proportion,
-        permissions: h.permissions,
+        permissions: form.permissions,
         subs: h.subs.map((s) => ({
           id: s.id,
           subTopic: s.subTopic.trim(),
@@ -161,25 +168,47 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
             setForm((f) => ({ ...f, templateName: e.target.value }))
           }
         />
-        <div className="mb-3">
-          <label htmlFor="evaluationPeriod" className="form-label">
-            ช่วงประเมิน
-          </label>
-          <select
-            id="evaluationPeriod"
-            name="evaluationPeriod"
-            className="form-select"
-            value={form.evaluationPeriod}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, evaluationPeriod: e.target.value }))
-            }
-          >
-            {EVALUATION_PERIODS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+        <div className="row g-3 mb-3">
+          <div className="col-md-4">
+            <NumberInput
+              label="ปีประเมิน (ค.ศ.)"
+              name="evaluationYear"
+              className="erp-input-number--sm"
+              min={2000}
+              max={2100}
+              integer
+              value={form.evaluationYear}
+              onValueChange={(evaluationYear) =>
+                setForm((f) => ({
+                  ...f,
+                  evaluationYear: evaluationYear ?? new Date().getFullYear(),
+                }))
+              }
+            />
+            <p className="text-muted small mb-0">
+              กำหนดปีที่แสดงในคอลัมน์ &quot;ปี&quot; ของรายการรอบ — ไม่ต้องพึ่งวันเริ่มอย่างเดียว
+            </p>
+          </div>
+          <div className="col-md-8">
+            <label htmlFor="evaluationPeriod" className="form-label">
+              ช่วงประเมิน
+            </label>
+            <select
+              id="evaluationPeriod"
+              name="evaluationPeriod"
+              className="form-select"
+              value={form.evaluationPeriod}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, evaluationPeriod: e.target.value }))
+              }
+            >
+              {EVALUATION_PERIODS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="row g-3">
           <div className="col-md-6">
@@ -205,8 +234,15 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
             />
           </div>
         </div>
+        <hr className="my-4" />
+        <RolePositionPermissionFields
+          roles={masters.roles}
+          positions={masters.positions}
+          value={form.permissions}
+          onChange={(permissions) => setForm((f) => ({ ...f, permissions }))}
+        />
         <p className="text-muted small mb-0">
-          หัวข้อประเมินหลัก (HEAD) ทั้งหมดด้านล่างจะอยู่ภายใต้แบบประเมินนี้
+          สิทธิ์ด้านบนใช้ร่วมกันทุกหัวข้อหลัก — หัวข้อประเมินหลัก (HEAD) อยู่ด้านล่าง
         </p>
       </ErpCollapsePanel>
 
@@ -229,7 +265,6 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
             key={head.clientKey}
             head={head}
             index={index}
-            masters={masters}
             onChange={(next) => updateHead(head.clientKey, next)}
             onRemove={() => removeHead(head.clientKey)}
           />

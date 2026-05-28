@@ -36,6 +36,9 @@ export function SidebarMenuTree({
         const hasChildren = node.children.length > 0;
         const isOpen = expandedItemIds.includes(node.id);
         const collapseId = `menu-${node.id}`;
+        const siblingFolderIds = nodes
+          .filter((n) => n.type === "folder" && n.children.length > 0)
+          .map((n) => n.id);
 
         if (node.type === "folder") {
           const isActiveBranch = nodeOrDescendantActive(node, pathname);
@@ -52,7 +55,7 @@ export function SidebarMenuTree({
                 aria-controls={hasChildren ? collapseId : undefined}
                 title={collapsed ? node.label : undefined}
                 onClick={() => {
-                  if (hasChildren) toggleItem(node.id);
+                  if (hasChildren) toggleItem(node.id, siblingFolderIds);
                 }}
                 disabled={!hasChildren}
               >
@@ -63,20 +66,25 @@ export function SidebarMenuTree({
                 </span>
                 {hasChildren && !collapsed && (
                   <i
-                    className={`bi ${isOpen ? "bi-chevron-down" : "bi-chevron-right"} menu-chevron`}
+                    className={`bi bi-chevron-right menu-chevron ${isOpen ? "is-open" : ""}`}
                   />
                 )}
                 </div>
               </button>
 
               {!collapsed && hasChildren && (
-                <div id={collapseId} className={`collapse ${isOpen ? "show" : ""}`}>
-                  <SidebarMenuTree
-                    nodes={node.children}
-                    collapsed={collapsed}
-                    depth={depth + 1}
-                    onNavigate={onNavigate}
-                  />
+                <div
+                  id={collapseId}
+                  className={`erp-menu-collapse ${isOpen ? "is-open" : ""}`}
+                >
+                  <div className="erp-menu-collapse__inner">
+                    <SidebarMenuTree
+                      nodes={node.children}
+                      collapsed={collapsed}
+                      depth={depth + 1}
+                      onNavigate={onNavigate}
+                    />
+                  </div>
                 </div>
               )}
             </div>

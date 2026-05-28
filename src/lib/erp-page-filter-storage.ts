@@ -1,6 +1,7 @@
 /** คีย์ query ที่เป็นตัวกรองตาราง (ไม่โชว์บน URL) */
 export const ROUND_LIST_FILTER_PARAM_KEYS = [
   "roundId",
+  "roundNameQ",
   "masterId",
   "evaluationPeriod",
   "evaluationYear",

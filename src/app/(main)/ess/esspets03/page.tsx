@@ -75,7 +75,11 @@ export default async function Esspets03Page({ searchParams }: Props) {
       {loadError ? <ErpAlert>{loadError}</ErpAlert> : null}
 
       {isDetail && detail ? (
-        <Esspets03DetailPanel detail={detail} backHref={backHref} />
+        <Esspets03DetailPanel
+          detail={detail}
+          backHref={backHref}
+          viewerCode={viewer}
+        />
       ) : !isDetail && !loadError ? (
         <>
           <Esspets03SearchForm

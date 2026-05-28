@@ -6,6 +6,7 @@ import { resolveManagerEvalDocumentStatus } from "@/lib/manager-eval-document-st
 import { parseGradeCriteria } from "@/lib/grade-criteria";
 import type { ManagerEvalQueueFilter } from "@/lib/manager-eval-queue-filter";
 import { matchesManagerEvalQueueRow } from "@/lib/manager-eval-queue-filter";
+import { formatRoundDisplayName } from "@/lib/round-name";
 import { buildRoundSearchWhere } from "@/lib/round-search";
 import { toDateOnlyString } from "@/lib/template-search";
 import { prisma } from "@/lib/prisma";
@@ -136,7 +137,11 @@ export async function queryManagerEvalQueueList(
     if (!acc.hasSelf) continue;
 
     const round = roundById.get(acc.templateId)!;
-    const roundLabel = round.roundName ?? `รอบ ${acc.templateId}`;
+    const roundLabel = formatRoundDisplayName(
+      round.roundName ?? `รอบ ${acc.templateId}`,
+      round.evaluationYear,
+      round.evaluationPeriod,
+    );
     const totalSubs = round.heads.reduce((n, h) => n + h.subs.length, 0);
     const documentStatus = resolveManagerEvalDocumentStatus(
       totalSubs,

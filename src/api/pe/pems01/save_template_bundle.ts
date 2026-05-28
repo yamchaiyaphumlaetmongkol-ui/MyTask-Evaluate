@@ -7,6 +7,7 @@ import {
   gradeCriteriaToJson,
   scoreRangeFromCriteria,
 } from "@/lib/grade-criteria";
+import { normalizeRoundNameForSave } from "@/lib/round-name";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -49,6 +50,7 @@ const BundleSchema = z
   .object({
     templateId: z.string().optional(),
     templateName: z.string().min(1, "กรุณากรอกชื่อแบบประเมิน"),
+    evaluationYear: z.coerce.number().int().min(2000).max(2100),
     evaluationPeriod: z.enum(["H1", "H2"], {
       message: "กรุณาเลือกช่วงประเมิน (ครึ่งแรก/ครึ่งหลัง)",
     }),
@@ -73,7 +75,7 @@ export async function saveEvaluationTemplateBundle(
     return fail(parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง");
   }
 
-  const { templateId, templateName, evaluationPeriod, startDate, endDate, heads } =
+  const { templateId, templateName, evaluationYear, evaluationPeriod, startDate, endDate, heads } =
     parsed.data;
 
   if (!templateId) {
@@ -83,7 +85,6 @@ export async function saveEvaluationTemplateBundle(
   }
 
   const roundPk = BigInt(templateId);
-  const year = parseFormDate(startDate).getUTCFullYear();
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -100,9 +101,9 @@ export async function saveEvaluationTemplateBundle(
       await tx.peEvaluationRound.update({
         where: { id: roundPk },
         data: {
-          roundName: templateName.trim(),
+          roundName: normalizeRoundNameForSave(templateName, evaluationYear),
           evaluationPeriod,
-          evaluationYear: year,
+          evaluationYear,
           startDate: parseFormDate(startDate),
           endDate: parseFormDate(endDate),
         },

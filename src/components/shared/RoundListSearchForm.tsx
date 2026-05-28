@@ -8,6 +8,7 @@ import {
   ErpSearchPanel,
   ErpFilterSelect,
 } from "@/components/erp";
+import { RoundNameSearchInput } from "@/components/shared/RoundNameSearchInput";
 import { EVALUATION_PERIODS } from "@/lib/evaluation-period";
 import { EVALUATION_ROUND_STATUSES } from "@/lib/evaluation-round";
 import type { RoundListFilter } from "@/lib/round-list-filter";
@@ -77,15 +78,10 @@ export function RoundListSearchForm({
 
       <ErpSearchFilterRows>
         <ErpSearchFilterCol>
-          <ErpField label="ชื่อรอบ / แบบประเมิน" htmlFor={`${idPrefix}-roundId`}>
-            <ErpFilterSelect
-              id={`${idPrefix}-roundId`}
-              name="roundId"
-              options={options.rounds}
-              defaultValue={filter.roundId ?? ""}
-              searchPlaceholder="ค้นหารอบ / แบบประเมิน..."
-            />
-          </ErpField>
+          <RoundNameSearchInput
+            id={`${idPrefix}-roundNameQ`}
+            defaultValue={filter.roundNameQ ?? ""}
+          />
         </ErpSearchFilterCol>
 
         {showMaster ? (

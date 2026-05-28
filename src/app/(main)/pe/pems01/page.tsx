@@ -1,8 +1,8 @@
 import { queryRoundListFilterOptions } from "@/api/_shared/round-filter-options";
 import { ErpAlert, ErpPageTitle } from "@/components/erp";
 import { Pems01PageClient } from "@/components/pe/pems01/Pems01PageClient";
+import { Pems01TopActions } from "@/components/pe/pems01/Pems01TopActions";
 import { PageContent } from "@/components/layout/PageContent";
-import Link from "next/link";
 
 export default async function Pems01Page() {
   let filterOptions: Awaited<
@@ -21,11 +21,7 @@ export default async function Pems01Page() {
     <PageContent>
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <ErpPageTitle className="mb-0">รอบประเมิน</ErpPageTitle>
-        <div className="d-flex flex-wrap gap-2">
-          <Link href="/pe/pems01/masters" className="btn btn-outline-primary btn-lg">
-            แม่แบบแบบประเมิน
-          </Link>
-        </div>
+        <Pems01TopActions filterOptions={filterOptions} />
       </div>
 
       {optionsError ? (

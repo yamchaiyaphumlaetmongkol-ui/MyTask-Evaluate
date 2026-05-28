@@ -2,6 +2,7 @@ import {
   queryMasterFormInitial,
   queryPeMasters,
 } from "@/api/pe/pems01/_queries";
+import { emptyTopicPermission } from "@/api/pe/pems01/types";
 import { BackLink } from "@/components/shared/BackLink";
 import { MasterBlueprintForm } from "@/components/pe/template-form/MasterBlueprintForm";
 import { PageContent } from "@/components/layout/PageContent";
@@ -17,6 +18,7 @@ export default async function Pems01MasterFormPage({ searchParams }: Props) {
   let initialState: Awaited<ReturnType<typeof queryMasterFormInitial>> = {
     masterName: "",
     description: "",
+    permissions: emptyTopicPermission(),
     heads: [],
   };
   let masters: Awaited<ReturnType<typeof queryPeMasters>> = {

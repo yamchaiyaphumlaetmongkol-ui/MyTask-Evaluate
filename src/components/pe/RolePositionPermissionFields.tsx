@@ -31,7 +31,7 @@ export function RolePositionPermissionFields({
   return (
     <div className="pe-permission-fields">
       <fieldset className="mb-4">
-        <legend className="fs-6 fw-semibold mb-3">สิทธิ์แก้ไขหัวข้อนี้</legend>
+        <legend className="fs-6 fw-semibold mb-3">สิทธิ์แก้ไข</legend>
         <div className="row g-3">
           <div className="col-md-6">
             <CheckboxDropdown

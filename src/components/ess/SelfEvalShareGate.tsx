@@ -2,6 +2,7 @@
 
 import type { TemplateOption } from "@/api/ess/esspets02/types";
 import { ErpPageIntro, ErpPageTitle } from "@/components/erp";
+import { BackLink } from "@/components/shared/BackLink";
 import { useHasCurrentUser } from "@/hooks/useHasCurrentUser";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -26,6 +27,9 @@ export function SelfEvalShareGate({ template }: Props) {
 
   return (
     <>
+      <div className="mb-3">
+        <BackLink href="/ess/esspets01">กลับเลือกแบบประเมิน</BackLink>
+      </div>
       <ErpPageTitle>ประเมินตนเอง</ErpPageTitle>
       <ErpPageIntro>
         แบบประเมิน: <span className="fw-semibold text-dark">{template.name}</span>

@@ -2,6 +2,7 @@ import {
   queryPeMasters,
   queryTemplateFormInitial,
 } from "@/api/pe/pems01/_queries";
+import { emptyTopicPermission } from "@/api/pe/pems01/types";
 import { BackLink } from "@/components/shared/BackLink";
 import { EvaluationTemplateForm } from "@/components/pe/template-form/EvaluationTemplateForm";
 import { PageContent } from "@/components/layout/PageContent";
@@ -16,9 +17,11 @@ export default async function Pems01FormPage({ searchParams }: Props) {
 
   let initialState: Awaited<ReturnType<typeof queryTemplateFormInitial>> = {
     templateName: "",
+    evaluationYear: new Date().getFullYear(),
     evaluationPeriod: "H1",
     startDate: "",
     endDate: "",
+    permissions: emptyTopicPermission(),
     heads: [],
   };
   let masters: Awaited<ReturnType<typeof queryPeMasters>> = {

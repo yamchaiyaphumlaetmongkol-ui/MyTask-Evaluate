@@ -395,8 +395,20 @@ body {
 }
 
 /* ESSPETS03 — หน้ารายละเอียดสถานะการประเมิน */
-.erp-esspets03-detail__back {
+.erp-esspets03-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
   margin-bottom: 1.25rem;
+}
+
+.erp-esspets03-detail__back {
+  margin-bottom: 0;
+}
+
+.erp-esspets03-detail__export-btn {
+  min-width: 7.5rem;
 }
 
 .erp-esspets03-detail__summary {
@@ -693,7 +705,10 @@ body {
     #fff 100%
   );
   border-right: 1px solid #dce8e2;
-  transition: width 0.25s ease;
+  transition:
+    width 0.28s ease,
+    min-width 0.28s ease,
+    flex-basis 0.28s ease;
   overflow: hidden;
 }
 
@@ -1092,9 +1107,41 @@ body {
   margin-left: auto;
   font-size: 0.75rem;
   color: #6b7c72;
+  transition: transform 0.2s ease;
+}
+
+.erp-menu-item .menu-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.erp-menu-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.22s ease,
+    opacity 0.18s ease;
+}
+
+.erp-menu-collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.erp-menu-collapse__inner {
+  min-height: 0;
+}
+
+.erp-menu-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 
 .erp-sidebar.is-collapsed .erp-menu-group .collapse {
+  display: none !important;
+}
+
+.erp-sidebar.is-collapsed .erp-menu-group .erp-menu-collapse {
   display: none !important;
 }
 
@@ -1180,4 +1227,70 @@ body {
 .erp-clickup-import-list__toolbar {
   z-index: 2;
   background: var(--bs-light);
+}
+
+/* Home dashboard */
+.erp-home-hero {
+  background: linear-gradient(
+    135deg,
+    var(--erp-green-dark) 0%,
+    var(--erp-green-primary) 55%,
+    var(--erp-green-teal) 100%
+  );
+  box-shadow: 0 0.5rem 1.5rem rgba(26, 83, 54, 0.2);
+}
+
+.erp-home-year-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: var(--erp-green-light);
+  color: var(--erp-green-dark);
+  font-weight: 700;
+}
+
+.erp-home-round-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.erp-home-round-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.25rem rgba(26, 83, 54, 0.12) !important;
+}
+
+.erp-home-progress {
+  background-color: var(--erp-green-light);
+}
+
+/* Score button picker */
+.erp-score-picker__scroll {
+  max-height: 11.5rem;
+  overflow: auto;
+  border: 1px solid var(--erp-border);
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.5rem;
+}
+
+.erp-score-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  gap: 0.4rem;
+}
+
+.erp-score-picker__btn {
+  min-height: 2rem;
+  padding: 0.2rem 0.35rem;
+  font-weight: 600;
+  border-radius: 0.45rem;
+}
+
+@media (max-width: 768px) {
+  .erp-score-picker__grid {
+    grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
+    gap: 0.35rem;
+  }
 }

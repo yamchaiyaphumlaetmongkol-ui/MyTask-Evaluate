@@ -7,6 +7,7 @@ import {
   type MasterBlueprintFormState,
   type PeMasters,
 } from "@/api/pe/pems01/types";
+import { RolePositionPermissionFields } from "@/components/pe/RolePositionPermissionFields";
 import { HeadFormBlock } from "@/components/pe/template-form/HeadFormBlock";
 import { CreateRoundPanel } from "@/components/pe/template-form/CreateRoundPanel";
 import { Button } from "@/components/ui/Button";
@@ -66,7 +67,7 @@ export function MasterBlueprintForm({ initialState, masters, mode }: Props) {
         id: h.id,
         headTopic: h.headTopic.trim(),
         proportion: h.proportion,
-        permissions: h.permissions,
+        permissions: form.permissions,
         subs: h.subs.map((s) => ({
           id: s.id,
           subTopic: s.subTopic.trim(),
@@ -157,6 +158,16 @@ export function MasterBlueprintForm({ initialState, masters, mode }: Props) {
             }
           />
         </div>
+        <hr className="my-4" />
+        <RolePositionPermissionFields
+          roles={masters.roles}
+          positions={masters.positions}
+          value={form.permissions}
+          onChange={(permissions) => setForm((f) => ({ ...f, permissions }))}
+        />
+        <p className="text-muted small mb-0">
+          สิทธิ์ด้านบนใช้ร่วมกันทุกหัวข้อหลักในแม่แบบนี้
+        </p>
       </ErpCollapsePanel>
 
       {form.masterId && (
@@ -186,7 +197,6 @@ export function MasterBlueprintForm({ initialState, masters, mode }: Props) {
             key={head.clientKey}
             head={head}
             index={index}
-            masters={masters}
             onChange={(next) => updateHead(head.clientKey, next)}
             onRemove={() => removeHead(head.clientKey)}
           />

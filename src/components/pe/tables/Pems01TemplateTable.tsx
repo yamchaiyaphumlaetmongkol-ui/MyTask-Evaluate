@@ -21,7 +21,13 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async (row: EvaluationTemplateRow) => {
-    if (!confirm(`ลบรอบประเมิน "${row.templateName}"?`)) return;
+    if (
+      !confirm(
+        `นำรอบ "${row.templateName}" ออกจากรายการ?\n\n(ปิดการใช้งาน — ผลประเมินเดิมยังเก็บไว้ในระบบ)`,
+      )
+    ) {
+      return;
+    }
     setDeletingId(row.id);
     setError(null);
     const res = await deleteEvaluationTemplate(row.id);
@@ -98,7 +104,7 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
                       disabled={deletingId === row.id}
                       onClick={() => handleDelete(row)}
                     >
-                      {deletingId === row.id ? "..." : "ลบ"}
+                      {deletingId === row.id ? "..." : "นำออก"}
                     </button>
                   </div>
                 </td>

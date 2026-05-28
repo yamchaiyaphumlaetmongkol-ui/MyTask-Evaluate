@@ -2,14 +2,19 @@
 
 import type { EvalStep } from "@/api/ess/esspets02/types";
 import { Button } from "@/components/ui/Button";
-import { NumberInput } from "@/components/ui/NumberInput";
+import { ScoreButtonPicker } from "@/components/ui/ScoreButtonPicker";
 import { Textarea } from "@/components/ui/Textarea";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type SavePayload = {
   subId: string;
   employeeCode: string;
   score: number;
+  detail: string;
+};
+
+type StepDraft = {
+  score: string;
   detail: string;
 };
 
@@ -38,30 +43,53 @@ export function EvalWizard({
 }: Props) {
   const total = steps.length;
   const [index, setIndex] = useState(0);
-  const [score, setScore] = useState("");
-  const [detail, setDetail] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [draftBySubId, setDraftBySubId] = useState<Record<string, StepDraft>>({});
 
   const step = steps[index];
   const progress = total > 0 ? Math.round(((index + 1) / total) * 100) : 0;
+  const stepDraft: StepDraft | null = step
+    ? (draftBySubId[step.subId] ?? {
+        score: step.savedScore != null ? String(step.savedScore) : "",
+        detail: step.savedDetail ?? "",
+      })
+    : null;
+  const score = stepDraft?.score ?? "";
+  const detail = stepDraft?.detail ?? "";
 
-  useEffect(() => {
-    if (!step) return;
-    setScore(step.savedScore != null ? String(step.savedScore) : "");
-    setDetail(step.savedDetail ?? "");
+  const advanceStep = () => {
+    if (index + 1 >= total) {
+      setDone(true);
+      return;
+    }
+    setIndex((i) => i + 1);
+  };
+
+  const goPrevious = () => {
+    if (index <= 0 || !step) return;
     setError(null);
-  }, [step]);
+    setIndex((i) => i - 1);
+  };
 
   const handleNext = async () => {
     if (!step) return;
-    const scoreNum = Number(score);
+    const scoreTrimmed = score.trim();
+    const detailTrimmed = detail.trim();
+    const hasInput = scoreTrimmed !== "" || detailTrimmed !== "";
+
+    if (mode === "self" && !hasInput) {
+      advanceStep();
+      return;
+    }
+
+    const scoreNum = Number(scoreTrimmed);
     if (Number.isNaN(scoreNum)) {
       setError("กรุณากรอกคะแนน");
       return;
     }
-    if (mode === "self" && !detail.trim()) {
+    if (mode === "self" && !detailTrimmed) {
       setError("กรุณากรอกรายละเอียดให้ครบ");
       return;
     }
@@ -81,12 +109,15 @@ export function EvalWizard({
       return;
     }
 
-    if (index + 1 >= total) {
-      setDone(true);
-      return;
-    }
+    setDraftBySubId((prev) => ({
+      ...prev,
+      [step.subId]: {
+        score: String(scoreNum),
+        detail,
+      },
+    }));
 
-    setIndex((i) => i + 1);
+    advanceStep();
   };
 
   if (total === 0) {
@@ -168,14 +199,23 @@ export function EvalWizard({
 
         <div className="row g-3">
           <div className="col-md-3">
-            <NumberInput
+            <ScoreButtonPicker
               label={scoreLabel}
-              integer={false}
               min={step.minScore}
               max={step.maxScore}
               value={score === "" ? null : Number(score)}
               hint={`ช่วงที่อนุญาต ${step.minScore} – ${step.maxScore}`}
-              onValueChange={(n) => setScore(n == null ? "" : String(n))}
+              onChange={(n) => {
+                setError(null);
+                setDraftBySubId((prev) => ({
+                  ...prev,
+                  [step.subId]: {
+                    score: n == null ? "" : String(n),
+                    detail,
+                  },
+                }));
+              }}
+              disabled={saving}
             />
           </div>
           <div className="col-md-9">
@@ -183,7 +223,16 @@ export function EvalWizard({
               label={detailLabel}
               rows={4}
               value={detail}
-              onChange={(e) => setDetail(e.target.value)}
+              onChange={(e) => {
+                setError(null);
+                setDraftBySubId((prev) => ({
+                  ...prev,
+                  [step.subId]: {
+                    score,
+                    detail: e.target.value,
+                  },
+                }));
+              }}
             />
           </div>
         </div>
@@ -192,7 +241,14 @@ export function EvalWizard({
           <div className="alert alert-danger py-2 mt-3 small">{error}</div>
         )}
 
-        <div className="d-flex justify-content-end mt-3">
+        <div className="d-flex justify-content-between mt-3">
+          <Button
+            variant="outline-secondary"
+            disabled={saving || index === 0}
+            onClick={goPrevious}
+          >
+            ย้อนกลับ
+          </Button>
           <Button variant="success" disabled={saving} onClick={handleNext}>
             {saving
               ? "กำลังบันทึก..."

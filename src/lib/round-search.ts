@@ -15,6 +15,18 @@ export function buildRoundSearchWhere(
     where.id = BigInt(filter.roundId.trim());
   }
 
+  const nameQ = filter.roundNameQ?.trim();
+  if (nameQ) {
+    where.OR = [
+      { roundName: { contains: nameQ, mode: "insensitive" } },
+      {
+        master: {
+          masterName: { contains: nameQ, mode: "insensitive" },
+        },
+      },
+    ];
+  }
+
   if (filter.masterId?.trim()) {
     where.masterId = BigInt(filter.masterId.trim());
   }

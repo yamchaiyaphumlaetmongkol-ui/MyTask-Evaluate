@@ -3,7 +3,7 @@
 import { fail, ok, type ActionResult } from "@/api/_shared/action-result";
 import { copyMasterBlueprintToRound } from "@/api/pe/pems01/_copy_master_to_round";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
-import { formatRoundLabel } from "@/lib/evaluation-round";
+import { normalizeRoundNameForSave } from "@/lib/round-name";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -52,12 +52,9 @@ export async function createEvaluationRound(
       return fail("ไม่พบแม่แบบแบบประเมิน");
     }
 
-    const periodLabel = formatEvaluationPeriod(evaluationPeriod);
-    const roundName = formatRoundLabel(
+    const roundName = normalizeRoundNameForSave(
       master.masterName,
       evaluationYear,
-      evaluationPeriod,
-      periodLabel,
     );
 
     const roundId = await prisma.$transaction(async (tx) => {

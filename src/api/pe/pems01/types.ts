@@ -74,9 +74,12 @@ export type EvaluationHeadDraft = {
 export type EvaluationTemplateFormState = {
   templateId?: string;
   templateName: string;
+  evaluationYear: number;
   evaluationPeriod: string;
   startDate: string;
   endDate: string;
+  /** สิทธิ์ระดับแบบประเมิน — ใช้ร่วมกันทุกหัวข้อหลัก */
+  permissions: TopicPermissionSelection;
   heads: EvaluationHeadDraft[];
 };
 
@@ -111,9 +114,11 @@ export const emptyHeadDraft = (): EvaluationHeadDraft => ({
 
 export const initialFormState = (): EvaluationTemplateFormState => ({
   templateName: "",
+  evaluationYear: new Date().getFullYear(),
   evaluationPeriod: "H1",
   startDate: "",
   endDate: "",
+  permissions: emptyTopicPermission(),
   heads: [],
 });
 
@@ -122,6 +127,8 @@ export type MasterBlueprintFormState = {
   masterId?: string;
   masterName: string;
   description: string;
+  /** สิทธิ์ระดับแม่แบบ — ใช้ร่วมกันทุกหัวข้อหลัก */
+  permissions: TopicPermissionSelection;
   heads: EvaluationHeadDraft[];
 };
 
@@ -135,5 +142,6 @@ export type MasterBlueprintRow = {
 export const initialMasterFormState = (): MasterBlueprintFormState => ({
   masterName: "",
   description: "",
+  permissions: emptyTopicPermission(),
   heads: [],
 });

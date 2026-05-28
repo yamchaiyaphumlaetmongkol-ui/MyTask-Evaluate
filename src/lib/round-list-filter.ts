@@ -2,7 +2,10 @@ import { parseDateOnly } from "@/lib/template-search";
 
 /** ตัวกรองรายการรอบประเมิน — สอดคล้องคอลัมน์ตาราง */
 export type RoundListFilter = {
+  /** @deprecated ใช้ roundNameQ — ค้นหาด้วยข้อความ */
   roundId?: string;
+  /** ค้นหาชื่อรอบ / แบบประเมิน (contains) */
+  roundNameQ?: string;
   masterId?: string;
   evaluationPeriod?: string;
   evaluationYear?: string;
@@ -14,6 +17,7 @@ export type RoundListFilter = {
 export function hasRoundListFilter(filter: RoundListFilter): boolean {
   return Boolean(
     filter.roundId?.trim() ||
+      filter.roundNameQ?.trim() ||
       filter.masterId?.trim() ||
       filter.evaluationPeriod?.trim() ||
       filter.evaluationYear?.trim() ||
