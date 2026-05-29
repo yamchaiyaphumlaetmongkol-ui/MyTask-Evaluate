@@ -2,13 +2,21 @@
 
 import { deleteEvaluationTemplate } from "@/api/pe/pems01/delete_template";
 import { duplicateEvaluationTemplate } from "@/api/pe/pems01/duplicate_template";
+import { updateEvaluationRoundStatus } from "@/api/pe/pems01/update_round_status";
 import type { EvaluationTemplateRow } from "@/api/pe/pems01/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { EVALUATION_PERIODS } from "@/lib/evaluation-period";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
-import { formatRoundStatus } from "@/lib/evaluation-round";
+import {
+  effectiveRoundStatus,
+  formatRoundStatus,
+  isPastRoundEndDate,
+  nextRoundStatus,
+  roundStatusButtonClass,
+  type EvaluationRoundStatus,
+} from "@/lib/evaluation-round";
 import { formatThaiDate, formatThaiDateTime } from "@/lib/format-datetime";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,9 +28,14 @@ type Props = {
   totalCount?: number;
 };
 
+function stripRoundPeriodSuffix(name: string): string {
+  return name.replace(/\s*\(\d{4}\s*·\s*ครึ่ง(?:แรก|หลัง)\)\s*$/u, "").trim();
+}
+
 export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [sourceRound, setSourceRound] = useState<EvaluationTemplateRow | null>(null);
   const [duplicateName, setDuplicateName] = useState("");
@@ -42,7 +55,7 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
 
   const openDuplicateModal = (row: EvaluationTemplateRow) => {
     setSourceRound(row);
-    setDuplicateName(`${row.templateName} (คัดลอก)`);
+    setDuplicateName(stripRoundPeriodSuffix(row.templateName));
     setDuplicateYear(String(row.evaluationYear));
     setDuplicatePeriod((row.evaluationPeriod === "H1" ? "H1" : "H2") as "H1" | "H2");
     setDuplicateStartDate(row.startDate ?? "");
@@ -85,6 +98,30 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
     closeDuplicateModal();
     router.push(`/pe/pems01/form?templateId=${encodeURIComponent(res.data.templateId)}`);
     router.refresh();
+  };
+
+  const handleStatusChange = async (
+    row: EvaluationTemplateRow,
+    status: EvaluationRoundStatus,
+  ) => {
+    if (effectiveRoundStatus(row.status, row.endDate) === status) return;
+
+    setStatusUpdatingId(row.id);
+    setError(null);
+    const res = await updateEvaluationRoundStatus({ roundId: row.id, status });
+    setStatusUpdatingId(null);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    router.refresh();
+  };
+
+  const handleCycleStatus = (row: EvaluationTemplateRow) => {
+    if (isPastRoundEndDate(row.endDate)) return;
+    const current = effectiveRoundStatus(row.status, row.endDate);
+    const next = nextRoundStatus(current);
+    void handleStatusChange(row, next);
   };
 
   const handleDelete = async (row: EvaluationTemplateRow) => {
@@ -133,7 +170,6 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
             <tr>
               <th className="text-center">ลำดับที่</th>
               <th>ชื่อรอบ</th>
-              <th>แม่แบบ</th>
               <th className="text-center">ปี</th>
               <th>ช่วงประเมิน</th>
               <th>สถานะ</th>
@@ -145,20 +181,62 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {rows.map((row, index) => {
+              const displayStatus = effectiveRoundStatus(row.status, row.endDate);
+              const nextStatus = nextRoundStatus(displayStatus);
+              const expired = isPastRoundEndDate(row.endDate);
+              const rowBusy =
+                statusUpdatingId === row.id ||
+                Boolean(duplicatingId) ||
+                deletingId === row.id;
+
+              return (
               <tr key={row.id}>
                 <td className="text-center">{index + 1}</td>
                 <td>{row.templateName}</td>
-                <td>{row.masterName}</td>
                 <td className="text-center">{row.evaluationYear}</td>
                 <td>{formatEvaluationPeriod(row.evaluationPeriod)}</td>
-                <td>{formatRoundStatus(row.status)}</td>
+                <td>
+                  <span
+                    className={
+                      displayStatus === "open"
+                        ? "badge text-bg-success"
+                        : displayStatus === "closed"
+                          ? "badge text-bg-secondary"
+                          : "badge text-bg-warning"
+                    }
+                  >
+                    {formatRoundStatus(displayStatus)}
+                  </span>
+                  {expired && displayStatus === "closed" ? (
+                    <span className="small text-muted d-block mt-1">
+                      หมดเวลาประเมิน
+                    </span>
+                  ) : null}
+                </td>
                 <td>{formatThaiDate(row.startDate)}</td>
                 <td>{formatThaiDate(row.endDate)}</td>
                 <td className="text-center">{row.headCount}</td>
                 <td>{formatThaiDateTime(row.createdAt)}</td>
                 <td className="text-center">
-                  <div className="d-inline-flex flex-wrap gap-1 justify-content-center">
+                  <div className="d-inline-flex flex-wrap gap-1 justify-content-center align-items-center">
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${roundStatusButtonClass(nextStatus)}`}
+                      style={{ minWidth: "6.5rem" }}
+                      disabled={rowBusy || expired}
+                      title={
+                        expired
+                          ? "หมดเวลาประเมินแล้ว — ปิดรอบอัตโนมัติ"
+                          : `คลิกเพื่อเปลี่ยนเป็น ${formatRoundStatus(nextStatus)}`
+                      }
+                      aria-label={`เปลี่ยนสถานะรอบ ${row.templateName} เป็น ${formatRoundStatus(nextStatus)}`}
+                      onClick={() => handleCycleStatus(row)}
+                    >
+                      {statusUpdatingId === row.id
+                        ? "..."
+                        : formatRoundStatus(nextStatus)}
+                    </button>
                     <Link
                       href={`/pe/pems01/form?templateId=${encodeURIComponent(row.id)}`}
                       className="btn btn-outline-primary btn-sm"
@@ -171,7 +249,7 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
                       disabled={Boolean(duplicatingId)}
                       onClick={() => openDuplicateModal(row)}
                     >
-                      Duplicate
+                      ทำสำเนา
                     </button>
                     <button
                       type="button"
@@ -184,7 +262,8 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>
@@ -197,7 +276,7 @@ export function Pems01TemplateTable({ rows, hasFilter, totalCount }: Props) {
 
       <Modal
         open={Boolean(sourceRound)}
-        title="Duplicate รอบประเมิน"
+        title="ทำสำเนารอบประเมิน"
         onClose={closeDuplicateModal}
         size="lg"
         footer={

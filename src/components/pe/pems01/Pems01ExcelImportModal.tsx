@@ -170,7 +170,7 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
   return (
     <Modal
       open={open}
-      title="Upload Excel — สร้างแบบประเมิน (โครงสร้างเท่านั้น)"
+      title="นำเข้า Excel — สร้างแบบประเมิน (เฉพาะโครงสร้าง)"
       onClose={onClose}
       size="xl"
       scrollable
@@ -180,7 +180,7 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
             ยกเลิก
           </Button>
           <Button variant="outline-primary" onClick={handleParse} disabled={loading || saving}>
-            {loading ? "กำลัง parse..." : "Parse / Preview"}
+            {loading ? "กำลังตรวจไฟล์..." : "ตรวจไฟล์ / ดูตัวอย่าง"}
           </Button>
           <Button variant="success" onClick={handleImport} disabled={!canImport || saving}>
             {saving ? "กำลังนำเข้า..." : "ยืนยันนำเข้า"}
@@ -188,16 +188,13 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
         </>
       }
     >
-      <p className="text-muted small mb-3">
-        นำเข้าเฉพาะหัวข้อหลัก / หัวข้อย่อย / เกณฑ์คะแนน (คอลัมน์ A–I) — ไม่นำเข้าคะแนนประเมินจากไฟล์
-      </p>
       <p className="mb-3">
         <a
           href={EVA_TEMPLATE_PUBLIC_URL}
           download
           className="btn btn-outline-secondary btn-sm"
         >
-          ดาวน์โหลดแม่แบบ Excel (EVA_TEMPLATE.xlsx)
+          ดาวน์โหลด Template
         </a>
       </p>
 
@@ -213,7 +210,7 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
 
       <div className="row g-3 mb-3">
         <div className="col-md-6">
-          <label className="form-label">Sheet</label>
+          <label className="form-label">ชีต</label>
           <select
             className="form-select"
             value={selectedSheet}
@@ -367,9 +364,9 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
 
       {preview && structure && (
         <div className="border rounded p-3 mb-3 bg-light-subtle">
-          <div className="fw-semibold mb-1">Preview โครงสร้าง</div>
+          <div className="fw-semibold mb-1">ตัวอย่างโครงสร้าง</div>
           <div className="small text-muted mb-2">
-            ปี {evaluationYear} · Head: {preview.headCount} · Sub: {preview.subCount} · เกณฑ์:{" "}
+            ปี {evaluationYear} · หัวข้อหลัก: {preview.headCount} · หัวข้อย่อย: {preview.subCount} · เกณฑ์:{" "}
             {preview.criteriaCount} · สัดส่วนรวม: {preview.proportionTotal.toFixed(2)}%
           </div>
           <ul className="small mb-0">
@@ -388,7 +385,7 @@ export function Pems01ExcelImportModal({ open, onClose, roundOptions }: Props) {
             <thead>
               <tr>
                 <th>ระดับ</th>
-                <th>Sheet</th>
+                <th>ชีต</th>
                 <th>แถว</th>
                 <th>คอลัมน์</th>
                 <th>ข้อความ</th>

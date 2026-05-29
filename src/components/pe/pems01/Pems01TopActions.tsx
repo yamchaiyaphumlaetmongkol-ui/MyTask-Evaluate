@@ -26,7 +26,7 @@ export function Pems01TopActions({ filterOptions }: Props) {
             setOpen(true);
           }}
         >
-          Upload Excel
+          นำเข้า Excel
         </button>
       </div>
       <Pems01ExcelImportModal

@@ -2,7 +2,9 @@
 
 import { fetchHomeDashboard } from "@/api/home/fetch_dashboard";
 import type { HomeDashboardRound } from "@/api/home/dashboard";
+import type { HomeDashboardSummary } from "@/api/home/dashboard";
 import { ErpAlert } from "@/components/erp";
+import { buildFilterQuery } from "@/lib/build-filter-query";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
 import { formatRoundStatus } from "@/lib/evaluation-round";
 import { useStoreHydrated } from "@/hooks/useStoreHydrated";
@@ -15,7 +17,34 @@ function progressPercent(completed: number, total: number): number {
   return Math.round((completed / total) * 100);
 }
 
-function RoundProgressCard({ round }: { round: HomeDashboardRound }) {
+function esspets03DetailHref(templateId: string, employeeCode: string): string {
+  return `/ess/esspets03${buildFilterQuery({
+    templateId,
+    employeeCode,
+    viewerCode: employeeCode,
+  })}`;
+}
+
+function groupRoundsByYear(
+  rounds: HomeDashboardRound[],
+): Array<[number, HomeDashboardRound[]]> {
+  if (rounds.length === 0) return [];
+  const map = new Map<number, HomeDashboardRound[]>();
+  for (const round of rounds) {
+    const list = map.get(round.evaluationYear) ?? [];
+    list.push(round);
+    map.set(round.evaluationYear, list);
+  }
+  return [...map.entries()].sort((a, b) => b[0] - a[0]);
+}
+
+function RoundProgressCard({
+  round,
+  employeeCode,
+}: {
+  round: HomeDashboardRound;
+  employeeCode: string;
+}) {
   const selfPct = progressPercent(round.selfCompleted, round.selfTotal);
   const mgrPct = progressPercent(round.managerCompleted, round.managerTotal);
 
@@ -64,7 +93,7 @@ function RoundProgressCard({ round }: { round: HomeDashboardRound }) {
         {round.hasManagerEval ? (
           <div className="mb-3">
             <div className="d-flex justify-content-between small mb-1">
-              <span>ผู้บังคับบัญชาประเมินแล้ว</span>
+              <span>ผู้จัดการประเมินแล้ว</span>
               <span className="fw-semibold">
                 {round.managerCompleted}/{round.managerTotal} ({mgrPct}%)
               </span>
@@ -77,7 +106,7 @@ function RoundProgressCard({ round }: { round: HomeDashboardRound }) {
             </div>
           </div>
         ) : (
-          <p className="small text-muted mb-3">ยังไม่มีผลจากผู้บังคับบัญชา</p>
+          <p className="small text-muted mb-3">ยังไม่มีผลประเมิน</p>
         )}
 
         <div className="d-flex flex-wrap gap-2">
@@ -88,7 +117,7 @@ function RoundProgressCard({ round }: { round: HomeDashboardRound }) {
             ประเมินตนเอง
           </Link>
           <Link
-            href={`/ess/esspets03?templateId=${round.roundId}`}
+            href={esspets03DetailHref(round.roundId, employeeCode)}
             className="btn btn-outline-secondary btn-sm"
           >
             ดูผล
@@ -99,38 +128,36 @@ function RoundProgressCard({ round }: { round: HomeDashboardRound }) {
   );
 }
 
+type LoadState =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "ready"; data: HomeDashboardSummary | null }
+  | { kind: "error" };
+
 export function HomeDashboard() {
   const hydrated = useStoreHydrated();
   const employeeCode = useCurrentUserStore((s) => s.employeeCode);
   const employeeName = useCurrentUserStore((s) => s.employeeName);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<Awaited<
-    ReturnType<typeof fetchHomeDashboard>
-  > | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>({ kind: "idle" });
 
   useEffect(() => {
-    if (!hydrated) return;
-    if (!employeeCode) {
-      setLoading(false);
-      setData(null);
-      return;
-    }
+    if (!hydrated || !employeeCode) return;
 
     let cancelled = false;
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) setLoadState({ kind: "loading" });
+    });
+
     fetchHomeDashboard(employeeCode)
       .then((result) => {
         if (!cancelled) {
-          setData(result);
-          setError(null);
+          setLoadState({ kind: "ready", data: result });
         }
       })
       .catch(() => {
-        if (!cancelled) setError("ไม่สามารถโหลดแดชบอร์ดได้");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoadState({ kind: "error" });
+        }
       });
 
     return () => {
@@ -138,18 +165,14 @@ export function HomeDashboard() {
     };
   }, [employeeCode, hydrated]);
 
-  const groupedByYear = useMemo(() => {
-    if (!data?.rounds.length) return [];
-    const map = new Map<number, HomeDashboardRound[]>();
-    for (const round of data.rounds) {
-      const list = map.get(round.evaluationYear) ?? [];
-      list.push(round);
-      map.set(round.evaluationYear, list);
-    }
-    return [...map.entries()].sort((a, b) => b[0] - a[0]);
-  }, [data?.rounds]);
+  const rounds =
+    loadState.kind === "ready" ? (loadState.data?.rounds ?? []) : [];
+  const groupedByYear = useMemo(() => groupRoundsByYear(rounds), [rounds]);
 
-  if (!hydrated || loading) {
+  const loading =
+    !hydrated || (Boolean(employeeCode) && loadState.kind === "loading");
+
+  if (loading) {
     return (
       <div className="erp-home-dashboard">
         <div className="placeholder-glow">
@@ -175,10 +198,11 @@ export function HomeDashboard() {
     );
   }
 
-  if (error) {
-    return <ErpAlert>{error}</ErpAlert>;
+  if (loadState.kind === "error") {
+    return <ErpAlert>ไม่สามารถโหลดแดชบอร์ดได้</ErpAlert>;
   }
 
+  const data = loadState.kind === "ready" ? loadState.data : null;
   const displayName = data?.employeeName || employeeName || employeeCode;
   const summary = data ?? {
     totalRounds: 0,
@@ -193,7 +217,7 @@ export function HomeDashboard() {
         <p className="small text-white-50 mb-1">แดชบอร์ดผลการประเมิน</p>
         <h1 className="h3 mb-2">สวัสดี, {displayName}</h1>
         <p className="mb-0 opacity-75">
-          สรุปความคืบหน้าการประเมินตนเองและผลจากผู้บังคับบัญชา แยกตามรอบและปี
+          สรุปความคืบหน้าการประเมินตนเองและผลจากผู้จัดการ แยกตามรอบและปี
         </p>
       </header>
 
@@ -240,20 +264,22 @@ export function HomeDashboard() {
       </div>
 
       {groupedByYear.length === 0 ? (
-        <ErpAlert>ยังไม่มีรอบประเมินในระบบ</ErpAlert>
+        <ErpAlert>
+          ยังไม่มีรอบประเมินที่เปิดให้ทำ — รอบจะแสดงเมื่อสถานะเป็นเปิดประเมินและถึงวันเริ่มแล้ว
+        </ErpAlert>
       ) : (
-        groupedByYear.map(([year, rounds]) => (
+        groupedByYear.map(([year, yearRounds]) => (
           <section key={year} className="mb-4">
             <h2 className="h5 mb-3 d-flex align-items-center gap-2">
               <span className="erp-home-year-badge">{year}</span>
               <span className="text-muted fw-normal small">
-                {rounds.length} รอบ
+                {yearRounds.length} รอบ
               </span>
             </h2>
             <div className="row g-3">
-              {rounds.map((round) => (
+              {yearRounds.map((round) => (
                 <div key={round.roundId} className="col-lg-6 col-xl-4">
-                  <RoundProgressCard round={round} />
+                  <RoundProgressCard round={round} employeeCode={employeeCode} />
                 </div>
               ))}
             </div>

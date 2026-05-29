@@ -1,4 +1,4 @@
--- PE: ผลการประเมินต่อรายละเอียด (เกณฑ์) — แยกตามผู้ถูกประเมิน และผู้ประเมิน (ตนเอง / ผู้บังคับบัญชา)
+-- PE: ผลการประเมินต่อรายละเอียด (เกณฑ์) — แยกตามผู้ถูกประเมิน และผู้ประเมิน (ตนเอง / ผู้จัดการ)
 CREATE TABLE IF NOT EXISTS pe_evaluation_detail_result (
     id                      BIGSERIAL PRIMARY KEY,
     pe_evaluation_detail    BIGINT       NOT NULL,
@@ -28,8 +28,8 @@ CREATE INDEX IF NOT EXISTS idx_pe_evaluation_detail_result_detail
 CREATE INDEX IF NOT EXISTS idx_pe_evaluation_detail_result_employee
     ON pe_evaluation_detail_result (employee_code);
 
-COMMENT ON TABLE pe_evaluation_detail_result IS 'ผลประเมินต่อรายละเอียด — คะแนน/ข้อความของพนักงาน (self) และผู้บังคับบัญชา (manager)';
+COMMENT ON TABLE pe_evaluation_detail_result IS 'ผลประเมินต่อรายละเอียด — คะแนน/ข้อความของพนักงาน (self) และผู้จัดการ (manager)';
 COMMENT ON COLUMN pe_evaluation_detail_result.employee_code IS 'รหัสพนักงานผู้ถูกประเมิน';
-COMMENT ON COLUMN pe_evaluation_detail_result.evaluator_type IS 'self = ประเมินตนเอง, manager = ผู้บังคับบัญชาประเมิน';
+COMMENT ON COLUMN pe_evaluation_detail_result.evaluator_type IS 'self = ประเมินตนเอง, manager = ผู้จัดการประเมิน';
 COMMENT ON COLUMN pe_evaluation_detail_result.evaluator_employee_code IS 'รหัสผู้กรอกผล (manager); self มักตรงกับ employee_code';
 COMMENT ON COLUMN pe_evaluation_detail_result.result_detail IS 'รายละเอียด/คำอธิบายผลประเมิน';

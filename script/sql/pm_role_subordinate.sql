@@ -20,4 +20,4 @@ CREATE TABLE IF NOT EXISTS pm_role_subordinate (
 CREATE INDEX IF NOT EXISTS idx_pm_role_subordinate_manager ON pm_role_subordinate (manager_code);
 CREATE INDEX IF NOT EXISTS idx_pm_role_subordinate_employee ON pm_role_subordinate (employee_code);
 
-COMMENT ON TABLE pm_role_subordinate IS 'ผู้บังคับบัญชาและผู้ใต้บังคับบัญชา';
+COMMENT ON TABLE pm_role_subordinate IS 'ผู้จัดการและผู้ใต้บังคับบัญชา';

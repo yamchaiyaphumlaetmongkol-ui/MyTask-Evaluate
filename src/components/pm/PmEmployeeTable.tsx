@@ -76,7 +76,7 @@ export function PmEmployeeTable({ rows, onDelete, deletingId }: Props) {
           {
             kind: "select",
             id: "pm-emp-role",
-            label: "Role",
+            label: "บทบาท",
             value: roleCode,
             options: roleOptions,
             onChange: setRoleCode,
@@ -108,9 +108,9 @@ export function PmEmployeeTable({ rows, onDelete, deletingId }: Props) {
                 </th>
                 <th>ชื่อเต็ม</th>
                 <th>รหัสพนักงาน</th>
-                <th>role</th>
-                <th>position</th>
-                <th>binding</th>
+                <th>บทบาท</th>
+                <th>ตำแหน่ง</th>
+                <th>การผูกกับบัญชี</th>
                 <th className="text-center">แก้ไข</th>
                 <th className="text-center">ลบ</th>
               </tr>

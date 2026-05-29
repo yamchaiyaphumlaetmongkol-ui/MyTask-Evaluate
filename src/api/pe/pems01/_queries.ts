@@ -13,8 +13,6 @@ import {
   type EvaluationSubDraft,
   type EvaluationTemplateFormState,
   type EvaluationTemplateRow,
-  type MasterBlueprintFormState,
-  type MasterBlueprintRow,
   type PeMasters,
   type TopicPermissionSelection,
 } from "@/api/pe/pems01/types";
@@ -172,69 +170,3 @@ export async function queryTemplateFormInitial(
   };
 }
 
-/** รายการแม่แบบ (/pe/pems01/masters) */
-export async function queryMasterBlueprintList(): Promise<MasterBlueprintRow[]> {
-  const rows = await prisma.peEvaluationTemplateMaster.findMany({
-    where: { active: true },
-    orderBy: { id: "asc" },
-    include: {
-      _count: { select: { blueprintHeads: { where: { active: true } } } },
-    },
-  });
-  return rows.map((m) => ({
-    id: String(m.id),
-    masterName: m.masterName,
-    headCount: m._count.blueprintHeads,
-    createdAt: m.createdDate.toISOString(),
-  }));
-}
-
-/** โหลดแม่แบบ + HEAD/SUB สำหรับ /pe/pems01/master/form */
-export async function queryMasterFormInitial(
-  masterId?: string,
-): Promise<MasterBlueprintFormState> {
-  if (!masterId) {
-    return {
-      masterName: "",
-      description: "",
-      permissions: emptyTopicPermission(),
-      heads: [],
-    };
-  }
-
-  const master = await prisma.peEvaluationTemplateMaster.findUnique({
-    where: { id: BigInt(masterId) },
-    include: {
-      blueprintHeads: {
-        where: { active: true },
-        orderBy: { id: "asc" },
-        include: {
-          subs: { where: { active: true }, orderBy: { id: "asc" } },
-        },
-      },
-    },
-  });
-
-  if (!master?.active) {
-    return {
-      masterName: "",
-      description: "",
-      permissions: emptyTopicPermission(),
-      heads: [],
-    };
-  }
-
-  const heads = await Promise.all(
-    master.blueprintHeads.map((h) => headToDraft(h)),
-  );
-  const permissions: TopicPermissionSelection =
-    heads[0]?.permissions ?? emptyTopicPermission();
-
-  return {
-    masterId: String(master.id),
-    masterName: master.masterName,
-    description: master.description ?? "",
-    permissions,
-    heads,
-  };
-}
