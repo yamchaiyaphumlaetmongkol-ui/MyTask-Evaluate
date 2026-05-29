@@ -122,26 +122,3 @@ export const initialFormState = (): EvaluationTemplateFormState => ({
   heads: [],
 });
 
-/** แม่แบบ (blueprint) — ไม่มีวันที่/ช่วงรอบ */
-export type MasterBlueprintFormState = {
-  masterId?: string;
-  masterName: string;
-  description: string;
-  /** สิทธิ์ระดับแม่แบบ — ใช้ร่วมกันทุกหัวข้อหลัก */
-  permissions: TopicPermissionSelection;
-  heads: EvaluationHeadDraft[];
-};
-
-export type MasterBlueprintRow = {
-  id: string;
-  masterName: string;
-  headCount: number;
-  createdAt: string;
-};
-
-export const initialMasterFormState = (): MasterBlueprintFormState => ({
-  masterName: "",
-  description: "",
-  permissions: emptyTopicPermission(),
-  heads: [],
-});

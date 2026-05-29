@@ -2,6 +2,7 @@ import type { EssTemplateSearchRow } from "@/api/ess/esspets01/types";
 import { ErpDataTable, type ErpColumn } from "@/components/erp";
 import { ShareLinkButton } from "@/components/shared/ShareLinkButton";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
+import { isOnOrAfterRoundStartDate } from "@/lib/evaluation-round";
 import { formatThaiDate, formatThaiDateTime } from "@/lib/format-datetime";
 import Link from "next/link";
 
@@ -77,19 +78,33 @@ export function Esspets01TemplateTable({ rows, hasFilter, totalCount }: Props) {
       header: "ดำเนินการ",
       headerClassName: "text-center",
       className: "text-center",
-      render: (row) => (
-        <div className="d-inline-flex flex-wrap gap-1 justify-content-center">
-          <Link
-            href={`/ess/esspets02?templateId=${row.id}&share=1`}
-            className="btn btn-success btn-sm"
-          >
-            เริ่มประเมิน
-          </Link>
-          <ShareLinkButton
-            url={`/ess/esspets02?templateId=${row.id}&share=1`}
-          />
-        </div>
-      ),
+      render: (row) => {
+        const canStart = isOnOrAfterRoundStartDate(row.startDate);
+        return (
+          <div className="d-inline-flex flex-wrap gap-1 justify-content-center align-items-center">
+            {canStart ? (
+              <>
+                <Link
+                  href={`/ess/esspets02?templateId=${row.id}&share=1`}
+                  className="btn btn-success btn-sm"
+                >
+                  เริ่มประเมิน
+                </Link>
+                <ShareLinkButton
+                  url={`/ess/esspets02?templateId=${row.id}&share=1`}
+                />
+              </>
+            ) : (
+              <span
+                className="small text-muted"
+                title={`เริ่มประเมินได้ตั้งแต่ ${formatThaiDate(row.startDate)}`}
+              >
+                ยังไม่ถึงวันเริ่ม
+              </span>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

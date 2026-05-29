@@ -8,6 +8,7 @@ import {
   selfEvalListStatus,
   type SelfEvalProgress,
 } from "@/lib/self-eval-completion";
+import { isRoundOpenForEval } from "@/lib/evaluation-round";
 import type { RoundListFilter } from "@/lib/round-list-filter";
 import { prisma } from "@/lib/prisma";
 
@@ -84,7 +85,9 @@ export async function queryEssTemplateSearch(
   filter: RoundListFilter = {},
   employeeCode?: string,
 ): Promise<EssTemplateSearchRow[]> {
-  const rows = await queryTemplateList(filter);
+  const rows = (await queryTemplateList(filter)).filter((r) =>
+    isRoundOpenForEval(r.status),
+  );
   if (!employeeCode?.trim()) {
     return rows.map((r) => ({
       id: r.id,

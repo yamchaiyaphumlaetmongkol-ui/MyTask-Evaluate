@@ -48,7 +48,7 @@ export function Esspets03DetailPanel({ detail, backHref, viewerCode }: Props) {
           title={
             canExport
               ? undefined
-              : "ยัง export ไม่ได้จนกว่าผลประเมินผู้บังคับบัญชาจะครบทุกหัวข้อ"
+              : "ยัง export ไม่ได้จนกว่าผลประเมินผู้จัดการจะครบทุกหัวข้อ"
           }
           onClick={async () => {
             setExporting(true);

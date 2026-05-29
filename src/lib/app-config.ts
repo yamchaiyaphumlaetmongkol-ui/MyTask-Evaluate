@@ -6,7 +6,7 @@ export const APP_CONFIG = {
   version: packageJson.version,
   title: "SS-Evaluate",
   tagline: "ระบบประเมิน",
-  brandTitle: "กกน.",
+  brandTitle: "MyPerformance",
   brandSub: "ระบบประเมิน",
   adminEmails: ["laetmongkol_y@softsquaregroup.com"],
 } as const;

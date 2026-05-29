@@ -128,7 +128,7 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
             {mode === "edit" ? "แก้ไขรอบประเมิน" : "สร้างรอบประเมิน"}
           </h1>
           <p className="text-muted small mb-0">
-            จัดการโครงสร้างรอบประเมินโดยตรง และสามารถใช้ปุ่ม Duplicate จากหน้ารายการได้
+            จัดการโครงสร้างรอบประเมินโดยตรง และสามารถใช้ปุ่มทำสำเนาจากหน้ารายการได้
           </p>
         </div>
         <div className="d-flex gap-2">
@@ -241,13 +241,13 @@ export function EvaluationTemplateForm({ initialState, masters, mode }: Props) {
           onChange={(permissions) => setForm((f) => ({ ...f, permissions }))}
         />
         <p className="text-muted small mb-0">
-          สิทธิ์ด้านบนใช้ร่วมกันทุกหัวข้อหลัก — หัวข้อประเมินหลัก (HEAD) อยู่ด้านล่าง
+          สิทธิ์ด้านบนใช้ร่วมกันทุกหัวข้อหลัก — รายการหัวข้อประเมินหลักอยู่ด้านล่าง
         </p>
       </ErpCollapsePanel>
 
       <div className="mb-3">
         <Button type="button" variant="success" onClick={addHead}>
-          + เพิ่มหัวข้อหลัก (HEAD)
+          + เพิ่มหัวข้อหลัก
         </Button>
       </div>
 

@@ -47,6 +47,8 @@ export async function duplicateEvaluationTemplate(
     endDate,
     status,
   } = parsed.data;
+  const trimmedTemplateName = templateName.trim();
+  const roundName = normalizeRoundNameForSave(trimmedTemplateName, evaluationYear);
 
   try {
     const source = await prisma.peEvaluationRound.findUnique({
@@ -65,17 +67,30 @@ export async function duplicateEvaluationTemplate(
     if (source.heads.length === 0) return fail("รอบต้นฉบับยังไม่มีหัวข้อประเมิน");
 
     const newRoundId = await prisma.$transaction(async (tx) => {
+      const duplicatedRound = await tx.peEvaluationRound.findFirst({
+        where: {
+          active: true,
+          roundName,
+          evaluationYear,
+          evaluationPeriod,
+        },
+        select: { id: true },
+      });
+      if (duplicatedRound) {
+        throw new Error("DUPLICATE_PERIOD");
+      }
+
       const master = await tx.peEvaluationTemplateMaster.create({
         data: {
-          masterName: templateName.trim(),
-          description: `Duplicated from round ${source.id.toString()}`,
+          masterName: trimmedTemplateName,
+          description: `ทำสำเนาจากรอบ ${source.id.toString()}`,
         },
       });
 
       const createdRound = await tx.peEvaluationRound.create({
         data: {
           masterId: master.id,
-          roundName: normalizeRoundNameForSave(templateName, evaluationYear),
+          roundName,
           evaluationYear,
           evaluationPeriod,
           startDate: parseFormDate(startDate),
@@ -140,6 +155,9 @@ export async function duplicateEvaluationTemplate(
     revalidatePath("/ess/esspets04");
     return ok({ templateId: String(newRoundId) });
   } catch (e) {
+    if (e instanceof Error && e.message === "DUPLICATE_PERIOD") {
+      return fail("ชื่อรอบนี้มีช่วงประเมินนี้แล้ว (H1/H2 ห้ามซ้ำ)");
+    }
     console.error("duplicateEvaluationTemplate", e);
     return fail("ทำสำเนารอบประเมินไม่สำเร็จ");
   }

@@ -166,11 +166,7 @@ body {
 }
 
 .erp-panel--head .erp-panel__header {
-  background: linear-gradient(
-    90deg,
-    var(--erp-green-light) 0%,
-    var(--erp-green-gradient-end) 100%
-  );
+  background: linear-gradient(90deg, var(--erp-green-light) 0%, var(--erp-green-gradient-end) 100%);
   border-bottom: 1px solid var(--erp-border);
   border-radius: 0.5rem 0.5rem 0 0;
 }
@@ -296,12 +292,7 @@ body {
   display: block;
   height: 0.75rem;
   border-radius: 0.25rem;
-  background: linear-gradient(
-    90deg,
-    #eef4f0 0%,
-    #e2ebe6 45%,
-    #eef4f0 90%
-  );
+  background: linear-gradient(90deg, #eef4f0 0%, #e2ebe6 45%, #eef4f0 90%);
   background-size: 200% 100%;
   animation: erp-skeleton-shimmer 1.2s ease-in-out infinite;
 }
@@ -461,7 +452,7 @@ body {
   margin: 0;
 }
 
-/* ตาราง matrix ประเมินตนเอง / ผู้บังคับบัญชา */
+/* ตาราง matrix ประเมินตนเอง / ผู้จัดการ */
 .erp-eval-matrix {
   table-layout: fixed;
   width: 100%;
@@ -742,7 +733,10 @@ body {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   text-align: left;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   box-shadow: 0 1px 2px rgba(26, 83, 54, 0.12);
 }
 
@@ -890,11 +884,7 @@ body {
   padding: 1.1rem 1.15rem 1.15rem;
   border-radius: 0.65rem;
   border: 1px solid var(--erp-border);
-  background: linear-gradient(
-    180deg,
-    var(--erp-green-light) 0%,
-    #fff 42%
-  );
+  background: linear-gradient(180deg, var(--erp-green-light) 0%, #fff 42%);
   box-shadow: 0 2px 12px rgba(45, 122, 94, 0.08);
 }
 
@@ -1253,7 +1243,9 @@ body {
 }
 
 .erp-home-round-card {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .erp-home-round-card:hover {

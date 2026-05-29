@@ -10,7 +10,7 @@
       "icon": "bi-house",
       "sortOrder": 1
     },
-      {
+    {
       "id": "pm",
       "parentId": null,
       "type": "folder",
@@ -59,7 +59,7 @@
       "parentId": "pe",
       "type": "page",
       "path": "/pe/pems01",
-      "label": "สร้างแบบประเมิน",
+      "label": "สร้าง/แก้ใข แบบประเมิน",
       "sortOrder": 1
     },
     {

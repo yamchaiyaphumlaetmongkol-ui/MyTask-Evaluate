@@ -33,7 +33,7 @@ export type EvaluationStatusTemplateDetail = {
   evaluationPeriod: string | null;
   employeeCode: string;
   employeeName: string;
-  /** ผู้ประเมิน (ผู้บังคับบัญชา) ที่บันทึกผลประเมินพนักงาน */
+  /** ผู้ประเมิน (ผู้จัดการ) ที่บันทึกผลประเมินพนักงาน */
   evaluatedByCode: string | null;
   evaluatedByName: string | null;
   heads: EvaluationStatusHeadBlock[];

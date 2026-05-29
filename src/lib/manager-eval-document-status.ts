@@ -1,4 +1,4 @@
-/** สถานะเอกสารการประเมินฝั่งผู้บังคับบัญชา (ESSPETS04) */
+/** สถานะเอกสารการประเมินฝั่งผู้จัดการ (ESSPETS04) */
 
 /** ค่าเริ่มต้นตัวกรอง ESSPETS04 */
 export const DEFAULT_MANAGER_EVAL_DOCUMENT_STATUS = "pending" as const;

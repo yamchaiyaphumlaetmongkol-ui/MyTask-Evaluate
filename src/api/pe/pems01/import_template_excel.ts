@@ -145,7 +145,6 @@ export async function importEvaluationTemplateExcel(
 
     revalidatePath("/pe/pems01");
     revalidatePath("/pe/pems01/form");
-    revalidatePath("/pe/pems01/masters");
 
     return ok({ roundId: String(savedRoundId) });
   } catch (e) {

@@ -1,6 +1,8 @@
+import { hasManagerResult } from "@/lib/evaluation-result";
+import { isOnOrAfterRoundStartDate } from "@/lib/evaluation-round";
 import { formatRoundDisplayName } from "@/lib/round-name";
 import { selfEvalListStatus } from "@/lib/self-eval-completion";
-import { hasManagerResult } from "@/lib/evaluation-result";
+import { toDateOnlyString } from "@/lib/template-search";
 import { prisma } from "@/lib/prisma";
 
 export type HomeDashboardRound = {
@@ -35,7 +37,7 @@ export async function queryHomeDashboard(
   if (!employee?.active || !employee.employeeCode) return null;
 
   const rounds = await prisma.peEvaluationRound.findMany({
-    where: { active: true, status: { in: ["open", "draft", "closed"] } },
+    where: { active: true, status: "open" },
     orderBy: [{ evaluationYear: "desc" }, { id: "desc" }],
     select: {
       id: true,
@@ -43,6 +45,7 @@ export async function queryHomeDashboard(
       evaluationYear: true,
       evaluationPeriod: true,
       status: true,
+      startDate: true,
       master: { select: { masterName: true } },
       heads: {
         where: { active: true },
@@ -53,9 +56,13 @@ export async function queryHomeDashboard(
     },
   });
 
+  const visibleRounds = rounds.filter((round) =>
+    isOnOrAfterRoundStartDate(toDateOnlyString(round.startDate)),
+  );
+
   const subToRound = new Map<string, string>();
   const allSubIds: bigint[] = [];
-  for (const round of rounds) {
+  for (const round of visibleRounds) {
     const roundId = String(round.id);
     for (const head of round.heads) {
       for (const sub of head.subs) {
@@ -110,7 +117,7 @@ export async function queryHomeDashboard(
     }
   }
 
-  const dashboardRounds: HomeDashboardRound[] = rounds.map((round) => {
+  const dashboardRounds: HomeDashboardRound[] = visibleRounds.map((round) => {
     const roundId = String(round.id);
     const selfTotal = round.heads.reduce((n, h) => n + h.subs.length, 0);
     const selfCompleted = selfDoneByRound.get(roundId)?.size ?? 0;
