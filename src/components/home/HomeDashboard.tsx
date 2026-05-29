@@ -6,7 +6,10 @@ import type { HomeDashboardSummary } from "@/api/home/dashboard";
 import { ErpAlert } from "@/components/erp";
 import { buildFilterQuery } from "@/lib/build-filter-query";
 import { formatEvaluationPeriod } from "@/lib/evaluation-period";
-import { formatRoundStatus } from "@/lib/evaluation-round";
+import {
+  formatRoundStatus,
+  isRoundOpenForEval,
+} from "@/lib/evaluation-round";
 import { useStoreHydrated } from "@/hooks/useStoreHydrated";
 import { useCurrentUserStore } from "@/store/currentUserStore";
 import Link from "next/link";
@@ -47,6 +50,7 @@ function RoundProgressCard({
 }) {
   const selfPct = progressPercent(round.selfCompleted, round.selfTotal);
   const mgrPct = progressPercent(round.managerCompleted, round.managerTotal);
+  const canSelfEval = isRoundOpenForEval(round.roundStatus);
 
   return (
     <div className="card erp-home-round-card h-100 border-0 shadow-sm">
@@ -110,12 +114,14 @@ function RoundProgressCard({
         )}
 
         <div className="d-flex flex-wrap gap-2">
-          <Link
-            href={`/ess/esspets02?templateId=${round.roundId}&share=1`}
-            className="btn btn-success btn-sm"
-          >
-            ประเมินตนเอง
-          </Link>
+          {canSelfEval ? (
+            <Link
+              href={`/ess/esspets02?templateId=${round.roundId}&share=1`}
+              className="btn btn-success btn-sm"
+            >
+              ประเมินตนเอง
+            </Link>
+          ) : null}
           <Link
             href={esspets03DetailHref(round.roundId, employeeCode)}
             className="btn btn-outline-secondary btn-sm"
@@ -255,17 +261,18 @@ export function HomeDashboard() {
       </div>
 
       <div className="d-flex flex-wrap gap-2 mb-4">
-        <Link href="/ess/esspets01" className="btn btn-primary btn-sm">
+        <Link href="/ess/esspets01" className="btn btn-success btn-sm">
           ค้นหาแบบประเมิน
         </Link>
-        <Link href="/ess/esspets03" className="btn btn-outline-primary btn-sm">
+        <Link href="/ess/esspets03" className="btn btn-outline-success btn-sm">
           ดูสถานะผลประเมิน
         </Link>
       </div>
 
       {groupedByYear.length === 0 ? (
         <ErpAlert>
-          ยังไม่มีรอบประเมินที่เปิดให้ทำ — รอบจะแสดงเมื่อสถานะเป็นเปิดประเมินและถึงวันเริ่มแล้ว
+          ยังไม่มีรอบประเมินที่แสดงได้ — รอบเปิดประเมินจะแสดงเมื่อถึงวันเริ่ม
+          หรือรอบที่คุณเคยทำประเมินแล้วจะแสดงแม้ปิดรอบ
         </ErpAlert>
       ) : (
         groupedByYear.map(([year, yearRounds]) => (

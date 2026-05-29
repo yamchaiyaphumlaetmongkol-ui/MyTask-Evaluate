@@ -1,4 +1,4 @@
-import { hasManagerResult } from "@/lib/evaluation-result";
+import { hasManagerResult, hasSelfResult } from "@/lib/evaluation-result";
 import { isOnOrAfterRoundStartDate } from "@/lib/evaluation-round";
 import { formatRoundDisplayName } from "@/lib/round-name";
 import { selfEvalListStatus } from "@/lib/self-eval-completion";
@@ -28,6 +28,39 @@ export type HomeDashboardSummary = {
   rounds: HomeDashboardRound[];
 };
 
+/** รอบที่พนักงานเคยบันทึกผลประเมินตนเองหรือผลจากผู้จัดการแล้ว */
+async function loadParticipatedRoundIds(
+  employeeCode: string,
+): Promise<bigint[]> {
+  const rows = await prisma.peEvaluationResult.findMany({
+    where: {
+      employeeCode,
+      sub: {
+        active: true,
+        head: { active: true, round: { active: true } },
+      },
+    },
+    select: {
+      selfScore: true,
+      selfDetail: true,
+      managerScore: true,
+      managerDetail: true,
+      sub: {
+        select: {
+          head: { select: { peEvaluationRound: true } },
+        },
+      },
+    },
+  });
+
+  const ids = new Set<bigint>();
+  for (const row of rows) {
+    if (!hasSelfResult(row) && !hasManagerResult(row)) continue;
+    ids.add(row.sub.head.peEvaluationRound);
+  }
+  return [...ids];
+}
+
 export async function queryHomeDashboard(
   employeeCode: string,
 ): Promise<HomeDashboardSummary | null> {
@@ -36,8 +69,21 @@ export async function queryHomeDashboard(
   });
   if (!employee?.active || !employee.employeeCode) return null;
 
+  const participatedRoundIds = await loadParticipatedRoundIds(employeeCode);
+  const participatedSet = new Set(
+    participatedRoundIds.map((id) => String(id)),
+  );
+
   const rounds = await prisma.peEvaluationRound.findMany({
-    where: { active: true, status: "open" },
+    where: {
+      active: true,
+      OR: [
+        { status: "open" },
+        ...(participatedRoundIds.length > 0
+          ? [{ id: { in: participatedRoundIds } }]
+          : []),
+      ],
+    },
     orderBy: [{ evaluationYear: "desc" }, { id: "desc" }],
     select: {
       id: true,
@@ -56,9 +102,11 @@ export async function queryHomeDashboard(
     },
   });
 
-  const visibleRounds = rounds.filter((round) =>
-    isOnOrAfterRoundStartDate(toDateOnlyString(round.startDate)),
-  );
+  const visibleRounds = rounds.filter((round) => {
+    if (participatedSet.has(String(round.id))) return true;
+    if (round.status !== "open") return false;
+    return isOnOrAfterRoundStartDate(toDateOnlyString(round.startDate));
+  });
 
   const subToRound = new Map<string, string>();
   const allSubIds: bigint[] = [];
