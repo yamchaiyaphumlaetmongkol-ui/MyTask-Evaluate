@@ -1,36 +1,32 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { authConfig } from "@/server/auth/auth.config";
 
-function pickFirstNonEmpty(...values: Array<string | undefined>) {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
-  }
-  return undefined;
-}
+import { authConfig } from "@/server/auth/auth.config";
 
 const { auth } = NextAuth({
   ...authConfig,
-  secret: pickFirstNonEmpty(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET),
+  secret: process.env.AUTH_SECRET,
 });
 
-type MiddlewareRequest = {
-  headers: Headers;
-  nextUrl: { origin: string };
-};
+console.log(
+  "[middleware] module loaded (src/middleware.ts) — AUTH_SECRET:",
+  !!process.env.AUTH_SECRET,
+);
 
-function resolveRequestOrigin(req: MiddlewareRequest): string {
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  const forwardedProto = req.headers.get("x-forwarded-proto");
-
-  if (forwardedHost) {
-    const proto = forwardedProto ?? "https";
-    return `${proto}://${forwardedHost}`;
+function withDebugHeaders(
+  res: NextResponse,
+  decision:
+    | "skip-api-auth"
+    | "redirect-signin"
+    | "allow-session"
+    | "error-fallback-redirect",
+) {
+  try {
+    res.headers.set("x-middleware-auth-debug", decision);
+  } catch (e) {
+    console.error("[middleware] failed to set debug header:", e);
   }
-
-  return req.nextUrl.origin;
+  return res;
 }
 
 export default auth((req) => {
@@ -51,34 +47,31 @@ export default auth((req) => {
     });
 
     if (nextUrl.pathname.startsWith("/api/auth")) {
-      return NextResponse.next();
+      console.log(tag, "SKIP (under /api/auth)");
+      return withDebugHeaders(NextResponse.next(), "skip-api-auth");
     }
 
     if (!isLoggedIn) {
-      const origin = resolveRequestOrigin(req);
-      const signInUrl = new URL("/api/auth/signin", origin);
-      const callbackUrl = new URL(
-        `${nextUrl.pathname}${nextUrl.search}`,
-        origin,
-      ).toString();
-      signInUrl.searchParams.set("callbackUrl", callbackUrl);
-      
+      const signInUrl = new URL("/api/auth/signin", nextUrl.origin);
+      signInUrl.searchParams.set("callbackUrl", nextUrl.href);
       console.log(tag, "REDIRECT →", signInUrl.toString());
-      return NextResponse.redirect(signInUrl);
+      return withDebugHeaders(
+        NextResponse.redirect(signInUrl),
+        "redirect-signin",
+      );
     }
 
-    return NextResponse.next();
+    console.log(tag, "ALLOW (has session)");
+    return withDebugHeaders(NextResponse.next(), "allow-session");
   } catch (error) {
     console.error(tag, "CAUGHT ERROR — fail-closed → sign-in:", error);
     try {
-      const origin = resolveRequestOrigin(req);
-      const signInUrl = new URL("/api/auth/signin", origin);
-      const callbackUrl = new URL(
-        `${nextUrl.pathname}${nextUrl.search}`,
-        origin,
-      ).toString();
-      signInUrl.searchParams.set("callbackUrl", callbackUrl);
-      return NextResponse.redirect(signInUrl);
+      const signInUrl = new URL("/api/auth/signin", nextUrl.origin);
+      signInUrl.searchParams.set("callbackUrl", nextUrl.href);
+      return withDebugHeaders(
+        NextResponse.redirect(signInUrl),
+        "error-fallback-redirect",
+      );
     } catch (fallbackErr) {
       console.error(tag, "fallback redirect failed:", fallbackErr);
       return NextResponse.next();

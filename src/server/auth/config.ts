@@ -1,15 +1,18 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { DefaultSession, NextAuthConfig } from "next-auth";
+import { type DefaultSession, type NextAuthConfig } from "next-auth";
 
-import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/server/auth/auth.config";
 
+/**
+ * Module augmentation สำหรับ TypeScript
+ */
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
     } & DefaultSession["user"];
+    accessToken?: string;
   }
 }
 
@@ -19,12 +22,14 @@ export const authOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: env.AUTH_SECRET,
   callbacks: {
     async jwt({ token, user, account }) {
       try {
+        if (account) {
+          token.accessToken = account.access_token;
+        }
         // Prisma `User.id` ต้องตรงกับ `session.user.id` — ถ้าไม่ตั้งตอน login
-        // `sub` อาจเป็น OIDC subject (เช่น Keycloak)
+        // `sub` อาจเป็น OIDC subject (เช่น Keycloak) ทำให้หา User ใน DB ไม่เจอ
         if (user?.id) {
           token.sub = user.id;
           return token;
@@ -62,6 +67,7 @@ export const authOptions = {
             ...session.user,
             id: token.sub ?? "",
           },
+          accessToken: token.accessToken as string | undefined,
         };
       } catch (error) {
         console.error("Auth session callback failed:", error);
@@ -71,6 +77,7 @@ export const authOptions = {
             ...session.user,
             id: token.sub ?? "",
           },
+          accessToken: token.accessToken as string | undefined,
         };
       }
     },
