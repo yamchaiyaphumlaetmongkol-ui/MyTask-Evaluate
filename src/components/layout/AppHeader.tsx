@@ -45,7 +45,7 @@ export function AppHeader() {
         <div className="d-flex align-items-center flex-shrink-0 ms-auto">
           <EvalNotificationBell />
           <Link href="/auth/signout" className="btn btn-dark btn-sm fw-bold">
-            SIGN OUT
+            SWITCH USER
           </Link>
         </div>
       </header>
