@@ -56,7 +56,7 @@ export default auth((req) => {
 
     if (!isLoggedIn) {
       const origin = resolveRequestOrigin(req);
-      const signInUrl = new URL("/api/auth/signin/keycloak", origin);
+      const signInUrl = new URL("/api/auth/signin", origin);
       const callbackUrl = new URL(
         `${nextUrl.pathname}${nextUrl.search}`,
         origin,
@@ -72,7 +72,7 @@ export default auth((req) => {
     console.error(tag, "CAUGHT ERROR — fail-closed → sign-in:", error);
     try {
       const origin = resolveRequestOrigin(req);
-      const signInUrl = new URL("/api/auth/signin/keycloak", origin);
+      const signInUrl = new URL("/api/auth/signin", origin);
       const callbackUrl = new URL(
         `${nextUrl.pathname}${nextUrl.search}`,
         origin,
