@@ -1,23 +1,15 @@
-import {
-  queryEmployeeByLoginEmail,
-  queryEmployeeOptions,
-} from "@/api/_shared/employee-options";
+import { queryEmployeeOptions } from "@/api/_shared/employee-options";
 import { getMenu } from "@/api/navigation/get_menu";
 import { MainShell } from "@/components/layout/MainShell";
-import { auth } from "@/server/auth";
 import type { ReactNode } from "react";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
-  const session = await auth();
-  const loginEmail = session?.user?.email ?? null;
-
-  const [menu, employees, loginEmployee] = await Promise.all([
+  const [menu, employees] = await Promise.all([
     getMenu(),
     queryEmployeeOptions(),
-    queryEmployeeByLoginEmail(loginEmail),
   ]);
   return (
-    <MainShell menu={menu} employees={employees} loginEmployee={loginEmployee}>
+    <MainShell menu={menu} employees={employees}>
       {children}
     </MainShell>
   );

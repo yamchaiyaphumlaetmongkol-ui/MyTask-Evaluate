@@ -66,7 +66,7 @@ export function PmEmployeeEditForm({ data }: Props) {
       <div className="card erp-panel border-0 mb-3">
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-4">
+            <div className="col-md-6">
               <Input
                 label="รหัสพนักงาน"
                 name="employeeCode"
@@ -77,7 +77,7 @@ export function PmEmployeeEditForm({ data }: Props) {
                 }
               />
             </div>
-            <div className="col-md-4">
+            <div className="col-md-6">
               <Input
                 label="คำนำหน้า"
                 name="titleName"
@@ -87,14 +87,14 @@ export function PmEmployeeEditForm({ data }: Props) {
                 }
               />
             </div>
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               <Input
                 label="อีเมล"
                 name="email"
                 value={form.email}
                 disabled
               />
-            </div>
+            </div> */}
             <div className="col-md-6">
               <Input
                 label="ชื่อ"

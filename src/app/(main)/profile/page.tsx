@@ -20,7 +20,6 @@ export default async function ProfilePage() {
   return (
     <PageContent>
       <ProfileBindingCard
-        loginEmail={identityRes.data.loginEmail}
         binding={
           identityRes.data.binding
             ? {

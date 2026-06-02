@@ -12,7 +12,21 @@ export function CurrentUserScopeGuard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { hydrated, hasUser, employeeCode } = useHasCurrentUser();
+  const { hydrated, hasUser, employeeCode, employeeId } = useHasCurrentUser();
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (employeeId) {
+      document.cookie = `erp_selected_employee_id=${encodeURIComponent(employeeId)}; path=/; max-age=31536000; samesite=lax`;
+    } else {
+      document.cookie = "erp_selected_employee_id=; path=/; max-age=0; samesite=lax";
+    }
+    if (employeeCode) {
+      document.cookie = `erp_selected_employee_code=${encodeURIComponent(employeeCode)}; path=/; max-age=31536000; samesite=lax`;
+    } else {
+      document.cookie = "erp_selected_employee_code=; path=/; max-age=0; samesite=lax";
+    }
+  }, [hydrated, employeeId, employeeCode]);
 
   useEffect(() => {
     if (!hydrated || !hasUser || !employeeCode) return;

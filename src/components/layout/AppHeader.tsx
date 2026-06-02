@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { EvalNotificationBell } from "@/components/layout/EvalNotificationBell";
 import { APP_CONFIG } from "@/lib/app-config";
+import { useCurrentUserStore } from "@/store/currentUserStore";
 import { useSidebarStore } from "@/store/sidebarStore";
 export function AppHeader() {
   const toggleCollapsed = useSidebarStore((s) => s.toggleCollapsed);
   const collapsed = useSidebarStore((s) => s.collapsed);
+  const clearCurrentUser = useCurrentUserStore((s) => s.clearCurrentUser);
 
   return (
     <>
@@ -44,9 +46,13 @@ export function AppHeader() {
 
         <div className="d-flex align-items-center flex-shrink-0 ms-auto">
           <EvalNotificationBell />
-          <Link href="/auth/signout" className="btn btn-dark btn-sm fw-bold">
-            SWITCH USER
-          </Link>
+          <button
+            type="button"
+            className="btn btn-dark btn-sm fw-bold"
+            onClick={clearCurrentUser}
+          >
+            เลือกผู้ใช้งาน
+          </button>
         </div>
       </header>
     </>

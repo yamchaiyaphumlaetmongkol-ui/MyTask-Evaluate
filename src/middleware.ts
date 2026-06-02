@@ -1,25 +1,8 @@
-import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-
-import { authConfig } from "@/server/auth/auth.config";
-
-const { auth } = NextAuth({
-  ...authConfig,
-  secret: process.env.AUTH_SECRET,
-});
-
-console.log(
-  "[middleware] module loaded (src/middleware.ts) — AUTH_SECRET:",
-  !!process.env.AUTH_SECRET,
-);
 
 function withDebugHeaders(
   res: NextResponse,
-  decision:
-    | "skip-api-auth"
-    | "redirect-signin"
-    | "allow-session"
-    | "error-fallback-redirect",
+  decision: "allow-pass-through" | "error-pass-through",
 ) {
   try {
     res.headers.set("x-middleware-auth-debug", decision);
@@ -29,18 +12,18 @@ function withDebugHeaders(
   return res;
 }
 
-export default auth((req) => {
-  const { nextUrl } = req;
+export default function middleware(req: Request) {
+  const nextUrl = new URL(req.url);
   const tag = `[middleware ${nextUrl.pathname}${nextUrl.search}]`;
 
   try {
     console.log(tag, "ALLOW (auth disabled)");
-    return withDebugHeaders(NextResponse.next(), "allow-session");
+    return withDebugHeaders(NextResponse.next(), "allow-pass-through");
   } catch (error) {
     console.error(tag, "CAUGHT ERROR — pass-through:", error);
-    return NextResponse.next();
+    return withDebugHeaders(NextResponse.next(), "error-pass-through");
   }
-});
+}
 
 export const config = {
   matcher: [

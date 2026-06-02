@@ -11,18 +11,16 @@ import { Suspense, type ReactNode } from "react";
 interface MainShellProps {
   menu: MenuConfig;
   employees: EmployeeOption[];
-  loginEmployee: EmployeeOption | null;
   children: ReactNode;
 }
 
 export function MainShell({
   menu,
   employees,
-  loginEmployee,
   children,
 }: MainShellProps) {
   return (
-    <EntryUserGate employees={employees} loginEmployee={loginEmployee}>
+    <EntryUserGate employees={employees}>
       <div className="erp-app-frame d-flex flex-column flex-grow-1">
         <Suspense fallback={null}>
           <CurrentUserScopeGuard />
