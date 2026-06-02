@@ -2,9 +2,18 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/server/auth/auth.config";
 
+function pickFirstNonEmpty(...values: Array<string | undefined>) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 const { auth } = NextAuth({
   ...authConfig,
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  secret: pickFirstNonEmpty(process.env.AUTH_SECRET, process.env.NEXTAUTH_SECRET),
 });
 
 type MiddlewareRequest = {
