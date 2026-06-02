@@ -10,7 +10,6 @@ declare module "next-auth" {
     user: {
       id: string;
     } & DefaultSession["user"];
-    accessToken?: string;
   }
 }
 
@@ -24,9 +23,6 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       try {
-        if (account) {
-          token.accessToken = account.access_token;
-        }
         // Prisma `User.id` ต้องตรงกับ `session.user.id` — ถ้าไม่ตั้งตอน login
         // `sub` อาจเป็น OIDC subject (เช่น Keycloak)
         if (user?.id) {
@@ -66,7 +62,6 @@ export const authOptions = {
             ...session.user,
             id: token.sub ?? "",
           },
-          accessToken: token.accessToken as string | undefined,
         };
       } catch (error) {
         console.error("Auth session callback failed:", error);
@@ -76,7 +71,6 @@ export const authOptions = {
             ...session.user,
             id: token.sub ?? "",
           },
-          accessToken: token.accessToken as string | undefined,
         };
       }
     },
