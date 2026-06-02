@@ -1,5 +1,11 @@
-import { getToken } from "next-auth/jwt";
-import { NextResponse, type NextRequest } from "next/server";
+import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
+import { authConfig } from "@/server/auth/auth.config";
+
+const { auth } = NextAuth({
+  ...authConfig,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+});
 
 type MiddlewareRequest = {
   headers: Headers;
@@ -18,31 +24,58 @@ function resolveRequestOrigin(req: MiddlewareRequest): string {
   return req.nextUrl.origin;
 }
 
-export default async function middleware(req: NextRequest) {
+export default auth((req) => {
   const { nextUrl } = req;
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
-  const isLoggedIn = Boolean(token);
+  const tag = `[middleware ${nextUrl.pathname}${nextUrl.search}]`;
 
-  if (nextUrl.pathname.startsWith("/api/auth")) {
+  try {
+    const isLoggedIn = !!req.auth;
+
+    console.log(tag, {
+      method: req.method,
+      isLoggedIn,
+      email: req.auth?.user?.email ?? null,
+      authCookieNames: req.cookies
+        .getAll()
+        .map((c) => c.name)
+        .filter((n) => /auth|session/i.test(n)),
+    });
+
+    if (nextUrl.pathname.startsWith("/api/auth")) {
+      return NextResponse.next();
+    }
+
+    if (!isLoggedIn) {
+      const origin = resolveRequestOrigin(req);
+      const signInUrl = new URL("/api/auth/signin", origin);
+      const callbackUrl = new URL(
+        `${nextUrl.pathname}${nextUrl.search}`,
+        origin,
+      ).toString();
+      signInUrl.searchParams.set("callbackUrl", callbackUrl);
+      
+      console.log(tag, "REDIRECT →", signInUrl.toString());
+      return NextResponse.redirect(signInUrl);
+    }
+
     return NextResponse.next();
+  } catch (error) {
+    console.error(tag, "CAUGHT ERROR — fail-closed → sign-in:", error);
+    try {
+      const origin = resolveRequestOrigin(req);
+      const signInUrl = new URL("/api/auth/signin", origin);
+      const callbackUrl = new URL(
+        `${nextUrl.pathname}${nextUrl.search}`,
+        origin,
+      ).toString();
+      signInUrl.searchParams.set("callbackUrl", callbackUrl);
+      return NextResponse.redirect(signInUrl);
+    } catch (fallbackErr) {
+      console.error(tag, "fallback redirect failed:", fallbackErr);
+      return NextResponse.next();
+    }
   }
-
-  if (!isLoggedIn) {
-    const origin = resolveRequestOrigin(req);
-    const signInUrl = new URL("/api/auth/signin", origin);
-    const callbackUrl = new URL(
-      `${nextUrl.pathname}${nextUrl.search}`,
-      origin,
-    ).toString();
-    signInUrl.searchParams.set("callbackUrl", callbackUrl);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
