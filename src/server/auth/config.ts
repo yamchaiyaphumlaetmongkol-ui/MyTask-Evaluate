@@ -19,8 +19,7 @@ export const authOptions = {
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: {
-    // Keep browser cookie minimal and persist session in database.
-    strategy: "database",
+    strategy: "jwt",
   },
   secret: process.env.AUTH_SECRET,
   callbacks: {
@@ -37,10 +36,22 @@ export const authOptions = {
       });
       return true;
     },
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      try {
+        // Keep stable subject id for middleware/session reads.
+        if (user?.id) {
+          token.sub = user.id;
+        }
+        return token;
+      } catch (error) {
+        console.error("Auth jwt callback failed:", error);
+        return token;
+      }
+    },
+    async session({ session, token }) {
       try {
         console.log("[auth.callback.session]", {
-          userId: user.id,
+          userId: token.sub ?? null,
           email: session.user?.email ?? null,
           expires: session.expires,
         });
@@ -48,7 +59,7 @@ export const authOptions = {
           ...session,
           user: {
             ...session.user,
-            id: user.id,
+            id: token.sub ?? "",
           },
         };
       } catch (error) {
@@ -57,7 +68,7 @@ export const authOptions = {
           ...session,
           user: {
             ...session.user,
-            id: user.id,
+            id: token.sub ?? "",
           },
         };
       }
