@@ -12,7 +12,6 @@ declare module "next-auth" {
     user: {
       id: string;
     } & DefaultSession["user"];
-    accessToken?: string;
   }
 }
 
@@ -20,54 +19,37 @@ export const authOptions = {
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "jwt",
+    // Keep browser cookie minimal and persist session in database.
+    strategy: "database",
   },
+  secret: process.env.AUTH_SECRET,
   callbacks: {
-    async jwt({ token, user, account }) {
-      try {
-        if (account) {
-          token.accessToken = account.access_token;
-        }
-        // Prisma `User.id` ต้องตรงกับ `session.user.id` — ถ้าไม่ตั้งตอน login
-        // `sub` อาจเป็น OIDC subject (เช่น Keycloak) ทำให้หา User ใน DB ไม่เจอ
-        if (user?.id) {
-          token.sub = user.id;
-          return token;
-        }
-        const sub =
-          typeof token.sub === "string" && token.sub.length > 0
-            ? token.sub
-            : null;
-        if (sub) {
-          const byId = await prisma.user.findUnique({
-            where: { id: sub },
-            select: { id: true },
-          });
-          if (byId) return token;
-
-          const acct = await prisma.account.findFirst({
-            where: { providerAccountId: sub },
-            select: { userId: true },
-          });
-          if (acct?.userId) {
-            token.sub = acct.userId;
-          }
-        }
-        return token;
-      } catch (error) {
-        console.error("Auth JWT callback failed:", error);
-        return token;
-      }
+    async signIn({ user, account, profile }) {
+      console.log("[auth.callback.signIn]", {
+        userId: user.id,
+        email: user.email ?? null,
+        provider: account?.provider ?? null,
+        providerAccountId: account?.providerAccountId ?? null,
+        profileSub:
+          profile && typeof profile === "object" && "sub" in profile
+            ? String((profile as { sub?: unknown }).sub ?? "")
+            : null,
+      });
+      return true;
     },
-    async session({ session, token }) {
+    async session({ session, user }) {
       try {
+        console.log("[auth.callback.session]", {
+          userId: user.id,
+          email: session.user?.email ?? null,
+          expires: session.expires,
+        });
         return {
           ...session,
           user: {
             ...session.user,
-            id: token.sub ?? "",
+            id: user.id,
           },
-          accessToken: token.accessToken as string | undefined,
         };
       } catch (error) {
         console.error("Auth session callback failed:", error);
@@ -75,11 +57,70 @@ export const authOptions = {
           ...session,
           user: {
             ...session.user,
-            id: token.sub ?? "",
+            id: user.id,
           },
-          accessToken: token.accessToken as string | undefined,
         };
       }
+    },
+  },
+  events: {
+    async signIn(message) {
+      console.log("[auth.event.signIn]", {
+        userId: message.user.id,
+        email: message.user.email ?? null,
+        provider: message.account?.provider ?? null,
+      });
+    },
+    async signOut(message) {
+      const hasSession = "session" in message && !!message.session;
+      console.log("[auth.event.signOut]", {
+        hasSession,
+        sessionExpires:
+          "session" in message && message.session
+            ? "expires" in message.session
+              ? message.session.expires
+              : null
+            : null,
+      });
+    },
+    async session(message) {
+      console.log("[auth.event.session]", {
+        hasSession: "session" in message,
+        expires:
+          "session" in message && message.session
+            ? "expires" in message.session
+              ? message.session.expires
+              : null
+            : null,
+      });
+    },
+    async createUser(message) {
+      console.log("[auth.event.createUser]", {
+        userId: message.user.id,
+        email: message.user.email ?? null,
+      });
+    },
+    async linkAccount(message) {
+      console.log("[auth.event.linkAccount]", {
+        userId: message.user.id,
+        provider: message.account.provider,
+        providerAccountId: message.account.providerAccountId,
+      });
+    },
+  },
+  logger: {
+    error(error: Error) {
+      console.error("[auth.logger.error]", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    },
+    warn(code: string) {
+      console.warn("[auth.logger.warn]", { code });
+    },
+    debug(code: string, metadata?: unknown) {
+      console.log("[auth.logger.debug]", { code, metadata });
     },
   },
 } satisfies NextAuthConfig;

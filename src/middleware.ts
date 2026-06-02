@@ -35,15 +35,30 @@ export default auth((req) => {
 
   try {
     const isLoggedIn = !!req.auth;
+    const host = req.headers.get("host");
+    const forwardedHost = req.headers.get("x-forwarded-host");
+    const forwardedProto = req.headers.get("x-forwarded-proto");
+    const userAgent = req.headers.get("user-agent");
+    const referer = req.headers.get("referer");
 
     console.log(tag, {
       method: req.method,
       isLoggedIn,
       email: req.auth?.user?.email ?? null,
+      userId: req.auth?.user?.id ?? null,
+      host,
+      forwardedHost,
+      forwardedProto,
+      referer,
+      userAgent,
       authCookieNames: req.cookies
         .getAll()
         .map((c) => c.name)
         .filter((n) => /auth|session/i.test(n)),
+      authCookieSizes: req.cookies
+        .getAll()
+        .filter((c) => /auth|session/i.test(c.name))
+        .map((c) => ({ name: c.name, size: c.value.length })),
     });
 
     if (nextUrl.pathname.startsWith("/api/auth")) {
