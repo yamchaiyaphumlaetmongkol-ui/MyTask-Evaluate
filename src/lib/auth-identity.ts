@@ -1,11 +1,10 @@
 import { fail, type ActionResult } from "@/api/_shared/action-result";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
 
 export async function getCurrentLoginEmailOrThrow(): Promise<string> {
   const actor = await getCurrentIdentityActor();
-  if (!actor.binding) {
-    throw new Error("USER_NOT_SELECTED");
+  if (!actor.binding && !actor.isAdmin) {
+    throw new Error("USER_NOT_AUTHENTICATED");
   }
   return actor.loginEmail;
 }
@@ -26,14 +25,22 @@ export type IdentityActor = {
 };
 
 export async function getCurrentIdentityActor(): Promise<IdentityActor> {
-  const cookieStore = await cookies();
-  const selectedEmployeeId = cookieStore.get("erp_selected_employee_id")?.value ?? "";
-  if (!selectedEmployeeId) {
+  const user = await getCurrentUser();
+  if (!user) {
     return { loginEmail: "", isAdmin: false, binding: null };
   }
 
+  if (!user.employeeId) {
+    return {
+      loginEmail: user.loginEmail,
+      isAdmin: user.isAdmin,
+      binding: null,
+    };
+  }
+
+  const { prisma } = await import("@/lib/prisma");
   const employee = await prisma.pmEmployee.findUnique({
-    where: { id: BigInt(selectedEmployeeId) },
+    where: { id: BigInt(user.employeeId) },
     select: {
       id: true,
       employeeCode: true,
@@ -43,18 +50,21 @@ export async function getCurrentIdentityActor(): Promise<IdentityActor> {
       lastName: true,
       clickupUserId: true,
       clickupEmail: true,
-      email: true,
       active: true,
     },
   });
+
   if (!employee?.active) {
-    return { loginEmail: "", isAdmin: false, binding: null };
+    return {
+      loginEmail: user.loginEmail,
+      isAdmin: user.isAdmin,
+      binding: null,
+    };
   }
 
-  const normalizedEmail = employee.email?.trim().toLowerCase() ?? "";
   return {
-    loginEmail: normalizedEmail,
-    isAdmin: false,
+    loginEmail: user.loginEmail,
+    isAdmin: user.isAdmin,
     binding: {
       id: String(employee.id),
       employeeId: String(employee.id),
@@ -69,8 +79,11 @@ export async function getCurrentIdentityActor(): Promise<IdentityActor> {
 }
 
 export function mapIdentityError(e: unknown): ActionResult<never> {
-  if (e instanceof Error && e.message === "USER_NOT_SELECTED") {
-    return fail("กรุณาเลือกผู้ใช้งาน");
+  if (e instanceof Error && e.message === "USER_NOT_AUTHENTICATED") {
+    return fail("กรุณาเข้าสู่ระบบ");
+  }
+  if (e instanceof Error && e.message === "NOT_AUTHENTICATED") {
+    return fail("กรุณาเข้าสู่ระบบ");
   }
   return fail("เกิดข้อผิดพลาดในการตรวจสอบตัวตน");
 }

@@ -1,33 +1,45 @@
+import { SESSION_COOKIE } from "@/lib/auth/constants";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-function withDebugHeaders(
-  res: NextResponse,
-  decision: "allow-pass-through" | "error-pass-through",
-) {
-  try {
-    res.headers.set("x-middleware-auth-debug", decision);
-  } catch (e) {
-    console.error("[middleware] failed to set debug header:", e);
-  }
-  return res;
+const PUBLIC_PREFIXES = ["/auth/login", "/auth/logout"];
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
 }
 
-export default function middleware(req: Request) {
-  const nextUrl = new URL(req.url);
-  const tag = `[middleware ${nextUrl.pathname}${nextUrl.search}]`;
+export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
 
-  try {
-    console.log(tag, "ALLOW (auth disabled)");
-    return withDebugHeaders(NextResponse.next(), "allow-pass-through");
-  } catch (error) {
-    console.error(tag, "CAUGHT ERROR — pass-through:", error);
-    return withDebugHeaders(NextResponse.next(), "error-pass-through");
+  if (pathname.startsWith("/auth/change-password")) {
+    if (!hasSession) {
+      return NextResponse.redirect(new URL("/auth/login", req.url));
+    }
+    return NextResponse.next();
   }
+
+  if (isPublicPath(pathname)) {
+    if (hasSession && pathname === "/auth/login") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (!hasSession) {
+    const login = new URL("/auth/login", req.url);
+    login.searchParams.set("from", pathname);
+    return NextResponse.redirect(login);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/((?!api/|auth/signout|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\..*).*)",
     "/",
   ],
 };

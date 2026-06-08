@@ -104,6 +104,41 @@ model PmPosition {
   @@map("pm_position")
 }
 
+enum AppAuthRole {
+  admin
+  user
+}
+
+/// Local login credentials (username = ClickUp email or admin)
+model AppUserAuth {
+  id                 BigInt      @id @default(autoincrement())
+  username           String      @unique
+  passwordHash       String      @map("password_hash")
+  role               AppAuthRole @default(user)
+  mustChangePassword Boolean     @default(true) @map("must_change_password")
+  employeeId         BigInt?     @unique @map("employee_id")
+  employee           PmEmployee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  sessions           AppSession[]
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+
+  @@map("app_user_auth")
+}
+
+/// HTTP session token (cookie stores raw token; DB stores SHA-256 hash)
+model AppSession {
+  id        String      @id @default(cuid())
+  tokenHash String      @unique @map("token_hash")
+  userId    BigInt      @map("user_id")
+  user      AppUserAuth @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime    @map("expires_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("app_session")
+}
+
 model PmEmployee {
   id                  BigInt   @id @default(autoincrement())
   employeeCode        String?  @unique @map("employee_code") @db.VarChar(50)
@@ -126,6 +161,7 @@ model PmEmployee {
   evaluatedResults PeEvaluationResult[] @relation("EvaluatedEmployee")
   managerResults   PeEvaluationResult[] @relation("ManagerEmployee")
   identityBindings UserIdentityBinding[]
+  appUserAuth      AppUserAuth?
 
   @@map("pm_employee")
 }

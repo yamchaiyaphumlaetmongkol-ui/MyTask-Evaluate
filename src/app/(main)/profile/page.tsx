@@ -1,36 +1,20 @@
-import { getMyIdentityBinding } from "@/api/identity/binding";
-import { queryEmployeeOptions } from "@/api/_shared/employee-options";
 import { PageContent } from "@/components/layout/PageContent";
 import { ProfileBindingCard } from "@/components/profile/ProfileBindingCard";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { redirect } from "next/navigation";
 
 export default async function ProfilePage() {
-  const [identityRes, employees] = await Promise.all([
-    getMyIdentityBinding(),
-    queryEmployeeOptions(),
-  ]);
-
-  if (!identityRes.ok) {
-    return (
-      <PageContent>
-        <div className="alert alert-danger">{identityRes.error}</div>
-      </PageContent>
-    );
-  }
+  const user = await getCurrentUser();
+  if (!user) redirect("/auth/login");
 
   return (
     <PageContent>
       <ProfileBindingCard
-        binding={
-          identityRes.data.binding
-            ? {
-                id: identityRes.data.binding.id,
-                employeeId: identityRes.data.binding.employeeId,
-                employeeCode: identityRes.data.binding.employeeCode,
-                employeeName: identityRes.data.binding.employeeName,
-              }
-            : null
-        }
-        employees={employees}
+        username={user.username}
+        isAdmin={user.isAdmin}
+        employeeName={user.employeeName}
+        employeeCode={user.employeeCode}
+        clickupEmail={user.clickupEmail}
       />
     </PageContent>
   );

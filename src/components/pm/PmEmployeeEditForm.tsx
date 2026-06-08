@@ -87,14 +87,6 @@ export function PmEmployeeEditForm({ data }: Props) {
                 }
               />
             </div>
-            {/* <div className="col-md-4">
-              <Input
-                label="อีเมล"
-                name="email"
-                value={form.email}
-                disabled
-              />
-            </div> */}
             <div className="col-md-6">
               <Input
                 label="ชื่อ"

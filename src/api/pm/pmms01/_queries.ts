@@ -63,7 +63,7 @@ export async function queryEmployeeForEdit(
   });
   if (!e?.active) return null;
 
-  const [roles, positions] = await Promise.all([
+  const [roles, positions, auth] = await Promise.all([
     prisma.pmRole.findMany({
       where: { active: true },
       orderBy: { roleCode: "asc" },
@@ -73,6 +73,10 @@ export async function queryEmployeeForEdit(
       where: { active: true },
       orderBy: { positionCode: "asc" },
       select: { positionCode: true, positionName: true },
+    }),
+    prisma.appUserAuth.findFirst({
+      where: { employeeId: e.id },
+      select: { username: true },
     }),
   ]);
 
@@ -87,6 +91,7 @@ export async function queryEmployeeForEdit(
     positionCode: e.positionCode ?? "",
     clickupUsername: e.clickupUsername,
     clickupProfileImage: e.clickupProfileImage,
+    authUsername: auth?.username ?? null,
     roles: roles.map((r) => ({ code: r.roleCode, name: r.roleName })),
     positions: positions.map((p) => ({
       code: p.positionCode,

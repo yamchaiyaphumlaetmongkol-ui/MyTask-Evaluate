@@ -1,6 +1,7 @@
 "use server";
 
 import { fail, ok, type ActionResult } from "@/api/_shared/action-result";
+import { ensureEmployeeAuthAccount } from "@/lib/auth/provision-user";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -59,6 +60,7 @@ async function upsertClickUpEmployee(
         ...clickupData,
       },
     });
+    await ensureEmployeeAuthAccount(existing.id);
     return String(existing.id);
   }
 
@@ -72,6 +74,7 @@ async function upsertClickUpEmployee(
       ...clickupData,
     },
   });
+  await ensureEmployeeAuthAccount(created.id);
   return String(created.id);
 }
 

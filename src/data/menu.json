@@ -45,6 +45,14 @@
       "sortOrder": 3
     },
     {
+      "id": "adminuserpasswords",
+      "parentId": "pm",
+      "type": "page",
+      "path": "/admin/user-passwords",
+      "label": "จัดการรหัสผ่านผู้ใช้",
+      "sortOrder": 4
+    },
+    {
       "id": "pe",
       "parentId": null,
       "type": "folder",

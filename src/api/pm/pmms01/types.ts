@@ -27,6 +27,7 @@ export type EmployeeEditData = {
   positionCode: string;
   clickupUsername: string | null;
   clickupProfileImage: string | null;
+  authUsername: string | null;
   roles: { code: string; name: string }[];
   positions: { code: string; name: string }[];
 };

@@ -2,11 +2,7 @@
 
 import { fail, ok, type ActionResult } from "@/api/_shared/action-result";
 import { prisma } from "@/lib/prisma";
-import {
-  getCurrentIdentityActor,
-  getCurrentLoginEmailOrThrow,
-  mapIdentityError,
-} from "@/lib/auth-identity";
+import { getCurrentIdentityActor, mapIdentityError } from "@/lib/auth-identity";
 import { revalidatePath } from "next/cache";
 
 function hasIdentityBindingModel(): boolean {
@@ -49,105 +45,19 @@ export async function getMyIdentityBinding(): Promise<
 }
 
 export async function bindMyIdentity(
-  employeeId: string,
+  _employeeId: string,
 ): Promise<ActionResult<{ bindingId: string }>> {
-  try {
-    if (!hasIdentityBindingModel()) {
-      return fail("ระบบ binding ยังไม่พร้อมใช้งาน (ต้อง generate Prisma ใหม่)");
-    }
-    const loginEmail = await getCurrentLoginEmailOrThrow();
-    const actor = await getCurrentIdentityActor();
-    if (actor.binding) {
-      return fail("บัญชีนี้ผูกตัวตนแล้ว");
-    }
-    const employeePk = BigInt(employeeId);
-
-    const result = await prisma.$transaction(async (tx) => {
-      const existingEmployeeBinding = await tx.userIdentityBinding.findUnique({
-        where: { employeeId: employeePk },
-      });
-      if (existingEmployeeBinding) {
-        throw new Error("EMPLOYEE_ALREADY_BOUND");
-      }
-
-      const employee = await tx.pmEmployee.findUnique({
-        where: { id: employeePk },
-      });
-      if (!employee?.active) {
-        throw new Error("EMPLOYEE_NOT_FOUND");
-      }
-
-      const created = await tx.userIdentityBinding.create({
-        data: {
-          loginEmail,
-          employeeId: employeePk,
-          createdByEmail: loginEmail,
-          updatedByEmail: loginEmail,
-        },
-      });
-      return { bindingId: String(created.id) };
-    });
-
-    revalidateIdentityPages();
-    return ok(result);
-  } catch (e) {
-    if (e instanceof Error && e.message === "EMPLOYEE_ALREADY_BOUND") {
-      return fail("บัญชีพนักงานนี้ถูกผูกกับผู้ใช้อื่นแล้ว");
-    }
-    if (e instanceof Error && e.message === "EMPLOYEE_NOT_FOUND") {
-      return fail("ไม่พบพนักงานที่เลือก");
-    }
-    return mapIdentityError(e);
-  }
+  return fail(
+    "ไม่สามารถเปลี่ยนการผูกตัวตนเองได้ — ตัวตนถูกกำหนดจากอีเมลที่ล็อกอิน",
+  );
 }
 
 export async function changeMyIdentity(
-  employeeId: string,
+  _employeeId: string,
 ): Promise<ActionResult<{ bindingId: string }>> {
-  try {
-    if (!hasIdentityBindingModel()) {
-      return fail("ระบบ binding ยังไม่พร้อมใช้งาน (ต้อง generate Prisma ใหม่)");
-    }
-    const actor = await getCurrentIdentityActor();
-    if (!actor.binding) {
-      return fail("ยังไม่พบการผูกตัวตน กรุณาเลือกผู้ใช้งาน");
-    }
-    const employeePk = BigInt(employeeId);
-
-    const result = await prisma.$transaction(async (tx) => {
-      const targetBinding = await tx.userIdentityBinding.findUnique({
-        where: { employeeId: employeePk },
-      });
-      if (targetBinding && String(targetBinding.id) !== actor.binding!.id) {
-        throw new Error("EMPLOYEE_ALREADY_BOUND");
-      }
-      const employee = await tx.pmEmployee.findUnique({
-        where: { id: employeePk },
-      });
-      if (!employee?.active) {
-        throw new Error("EMPLOYEE_NOT_FOUND");
-      }
-      const updated = await tx.userIdentityBinding.update({
-        where: { id: BigInt(actor.binding!.id) },
-        data: {
-          employeeId: employeePk,
-          updatedByEmail: actor.loginEmail,
-        },
-      });
-      return { bindingId: String(updated.id) };
-    });
-
-    revalidateIdentityPages();
-    return ok(result);
-  } catch (e) {
-    if (e instanceof Error && e.message === "EMPLOYEE_ALREADY_BOUND") {
-      return fail("บัญชีพนักงานนี้ถูกผูกกับผู้ใช้อื่นแล้ว");
-    }
-    if (e instanceof Error && e.message === "EMPLOYEE_NOT_FOUND") {
-      return fail("ไม่พบพนักงานที่เลือก");
-    }
-    return mapIdentityError(e);
-  }
+  return fail(
+    "ไม่สามารถเปลี่ยนการผูกตัวตนเองได้ — ตัวตนถูกกำหนดจากอีเมลที่ล็อกอิน",
+  );
 }
 
 export async function adminForceBind(
