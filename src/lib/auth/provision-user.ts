@@ -31,8 +31,6 @@ export async function ensureEmployeeAuthAccount(employeeId: bigint): Promise<voi
   const username = resolveLoginUsername(employee.clickupEmail, employee.email);
   if (!username) return;
 
-  const passwordHash = await hashPassword(DEFAULT_USER_PASSWORD);
-
   const existing = await prisma.appUserAuth.findFirst({
     where: {
       OR: [{ employeeId }, { username }],
@@ -50,6 +48,7 @@ export async function ensureEmployeeAuthAccount(employeeId: bigint): Promise<voi
     return;
   }
 
+  const passwordHash = await hashPassword(DEFAULT_USER_PASSWORD);
   await prisma.appUserAuth.create({
     data: {
       username,

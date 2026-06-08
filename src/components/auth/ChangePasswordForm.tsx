@@ -1,6 +1,5 @@
 "use client";
 
-import { changePassword } from "@/api/auth/change_password";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
@@ -8,26 +7,41 @@ import { useState } from "react";
 
 export function ChangePasswordForm() {
   const router = useRouter();
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const res = await changePassword({ newPassword, confirmPassword });
-    setLoading(false);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    formEl.reset();
 
-    if (!res.ok) {
-      setError(res.error);
-      return;
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+      });
+
+      const body = (await res.json()) as
+        | { ok: true }
+        | { ok: false; error: string };
+
+      if (!body.ok) {
+        setError(body.error ?? "บันทึกไม่สำเร็จ");
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch {
+      setError("บันทึกไม่สำเร็จ");
+    } finally {
+      setLoading(false);
     }
-
-    router.replace("/");
-    router.refresh();
   };
 
   return (
@@ -48,8 +62,6 @@ export function ChangePasswordForm() {
             name="newPassword"
             type="password"
             autoComplete="new-password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
             required
           />
         </div>
@@ -59,8 +71,6 @@ export function ChangePasswordForm() {
             name="confirmPassword"
             type="password"
             autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
             required
           />
         </div>

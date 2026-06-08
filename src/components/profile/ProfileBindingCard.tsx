@@ -23,7 +23,6 @@ export function ProfileBindingCard({
     <ErpPanel>
       <ErpPageTitle>โปรไฟล์การผูกตัวตน</ErpPageTitle>
       <ErpPageIntro>
-        ตัวตนถูกกำหนดจากอีเมลที่ล็อกอิน — ไม่สามารถเปลี่ยนเองได้
         {isAdmin ? " (ผู้ดูแลระบบจัดการผ่านหน้า admin)" : ""}
       </ErpPageIntro>
 

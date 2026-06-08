@@ -1,6 +1,5 @@
 "use client";
 
-import { login } from "@/api/auth/login";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useRouter } from "next/navigation";
@@ -8,30 +7,45 @@ import { useState } from "react";
 
 export function LoginForm() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const res = await login({ username, password });
-    setLoading(false);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+    formEl.reset();
 
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+      });
 
-    if (res.data.mustChangePassword) {
-      router.replace("/auth/change-password");
-    } else {
-      router.replace("/");
+      const body = (await res.json()) as
+        | { ok: true; data: { mustChangePassword: boolean } }
+        | { ok: false; error: string };
+
+      if (!body.ok) {
+        setError(body.error ?? "เข้าสู่ระบบไม่สำเร็จ");
+        return;
+      }
+
+      if (body.data.mustChangePassword) {
+        router.replace("/auth/change-password");
+      } else {
+        router.replace("/");
+      }
+      router.refresh();
+    } catch {
+      setError("เข้าสู่ระบบไม่สำเร็จ");
+    } finally {
+      setLoading(false);
     }
-    router.refresh();
   };
 
   return (
@@ -52,8 +66,6 @@ export function LoginForm() {
             name="username"
             type="text"
             autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
             required
           />
         </div>
@@ -63,8 +75,6 @@ export function LoginForm() {
             name="password"
             type="password"
             autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
