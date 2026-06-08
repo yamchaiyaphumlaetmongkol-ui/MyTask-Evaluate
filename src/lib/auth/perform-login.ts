@@ -9,11 +9,15 @@ export type LoginResult = {
   role: "admin" | "user";
 };
 
-/** ตรวจสอบ username/password และสร้าง session — ไม่ log รหัสผ่าน */
-export async function performLogin(
+export type AuthenticatedUser = LoginResult & {
+  userId: bigint;
+};
+
+/** ตรวจสอบ username/password — ยังไม่สร้าง session */
+export async function authenticateCredentials(
   username: string,
   password: string,
-): Promise<ActionResult<LoginResult>> {
+): Promise<ActionResult<AuthenticatedUser>> {
   const normalized = username.trim().toLowerCase();
   if (!normalized || !password) {
     return fail("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน");
@@ -34,14 +38,33 @@ export async function performLogin(
       return fail("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     }
 
-    await createAppSession(user.id);
-
     return ok({
+      userId: user.id,
       mustChangePassword: user.mustChangePassword,
       role: user.role,
     });
-  } catch (e) {
-    console.error("performLogin failed");
+  } catch {
+    console.error("authenticateCredentials failed");
+    return fail("เข้าสู่ระบบไม่สำเร็จ");
+  }
+}
+
+/** Server Action path — สร้าง session ผ่าน cookies() */
+export async function performLogin(
+  username: string,
+  password: string,
+): Promise<ActionResult<LoginResult>> {
+  const auth = await authenticateCredentials(username, password);
+  if (!auth.ok) return auth;
+
+  try {
+    await createAppSession(auth.data.userId);
+    return ok({
+      mustChangePassword: auth.data.mustChangePassword,
+      role: auth.data.role,
+    });
+  } catch {
+    console.error("performLogin session failed");
     return fail("เข้าสู่ระบบไม่สำเร็จ");
   }
 }

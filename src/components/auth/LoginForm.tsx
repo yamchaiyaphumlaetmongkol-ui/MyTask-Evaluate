@@ -2,11 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function LoginForm() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +21,7 @@ export function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         body: form,
-        credentials: "same-origin",
+        credentials: "include",
       });
 
       const body = (await res.json()) as
@@ -35,12 +33,10 @@ export function LoginForm() {
         return;
       }
 
-      if (body.data.mustChangePassword) {
-        router.replace("/auth/change-password");
-      } else {
-        router.replace("/");
-      }
-      router.refresh();
+      const target = body.data.mustChangePassword
+        ? "/auth/change-password"
+        : "/";
+      window.location.assign(target);
     } catch {
       setError("เข้าสู่ระบบไม่สำเร็จ");
     } finally {

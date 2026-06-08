@@ -2,11 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function ChangePasswordForm() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +21,7 @@ export function ChangePasswordForm() {
       const res = await fetch("/api/auth/change-password", {
         method: "POST",
         body: form,
-        credentials: "same-origin",
+        credentials: "include",
       });
 
       const body = (await res.json()) as
@@ -35,8 +33,7 @@ export function ChangePasswordForm() {
         return;
       }
 
-      router.replace("/");
-      router.refresh();
+      window.location.assign("/");
     } catch {
       setError("บันทึกไม่สำเร็จ");
     } finally {
