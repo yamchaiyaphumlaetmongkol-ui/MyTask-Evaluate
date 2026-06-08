@@ -36,27 +36,27 @@ export function SidebarUserSelect({ employees }: Props) {
   const displayCode = current?.code ?? employeeCode;
 
   useEffect(() => {
-    if (!hydrated || employees.length === 0) return;
+    if (!hydrated || employees.length === 0 || !employeeId) return;
 
-    if (employeeId) {
-      const match = employees.find((e) => e.id === employeeId);
-      if (match?.code) {
-        if (match.code !== employeeCode) setCurrentUser(match);
-        return;
-      }
-      useCurrentUserStore.getState().clearCurrentUser();
-      return;
-    }
+    const match = employees.find((e) => e.id === employeeId);
+    if (!match) return;
 
-    if (employeeCode) {
-      const legacy = employees.find((e) => e.code === employeeCode);
-      if (legacy?.code) {
-        setCurrentUser(legacy);
-        return;
-      }
-      useCurrentUserStore.getState().clearCurrentUser();
+    if (
+      match.code !== employeeCode ||
+      match.name !== employeeName ||
+      match.profileImage !== profileImage
+    ) {
+      setCurrentUser(match);
     }
-  }, [hydrated, employees, employeeId, employeeCode, setCurrentUser]);
+  }, [
+    hydrated,
+    employees,
+    employeeId,
+    employeeCode,
+    employeeName,
+    profileImage,
+    setCurrentUser,
+  ]);
 
   if (!hydrated) {
     return (
@@ -95,7 +95,7 @@ export function SidebarUserSelect({ employees }: Props) {
             <>
               <span className="erp-sidebar-user-card__text min-w-0">
                 <span className="erp-sidebar-user-card__name d-block text-truncate">
-                  {displayName || "เลือกผู้ใช้งาน"}
+                  {displayName || "โปรไฟล์ผู้ใช้"}
                 </span>
                 <span className="erp-sidebar-user-card__code d-block text-truncate">
                   {displayCode ? displayCode : codeLabel(null)}

@@ -69,6 +69,36 @@ export async function queryHomeDashboard(
   });
   if (!employee?.active || !employee.employeeCode) return null;
 
+  const code = employee.employeeCode;
+
+  try {
+    return await loadHomeDashboardForEmployee({
+      employeeCode: code,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+    });
+  } catch (e) {
+    console.error("queryHomeDashboard", e);
+    return {
+      employeeCode: code,
+      employeeName: `${employee.firstName} ${employee.lastName}`.trim(),
+      totalRounds: 0,
+      selfCompleteCount: 0,
+      selfPendingCount: 0,
+      rounds: [],
+    };
+  }
+}
+
+async function loadHomeDashboardForEmployee(
+  employee: {
+    employeeCode: string;
+    firstName: string;
+    lastName: string;
+  },
+): Promise<HomeDashboardSummary> {
+  const employeeCode = employee.employeeCode;
+
   const participatedRoundIds = await loadParticipatedRoundIds(employeeCode);
   const participatedSet = new Set(
     participatedRoundIds.map((id) => String(id)),
@@ -199,7 +229,7 @@ export async function queryHomeDashboard(
   ).length;
 
   return {
-    employeeCode: employee.employeeCode,
+    employeeCode,
     employeeName: `${employee.firstName} ${employee.lastName}`.trim(),
     totalRounds: dashboardRounds.length,
     selfCompleteCount,

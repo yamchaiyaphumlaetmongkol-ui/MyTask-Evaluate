@@ -8,5 +8,10 @@ import {
 export async function fetchHomeDashboard(
   employeeCode: string,
 ): Promise<HomeDashboardSummary | null> {
-  return queryHomeDashboard(employeeCode);
+  try {
+    return await queryHomeDashboard(employeeCode);
+  } catch (e) {
+    console.error("fetchHomeDashboard", e);
+    return null;
+  }
 }

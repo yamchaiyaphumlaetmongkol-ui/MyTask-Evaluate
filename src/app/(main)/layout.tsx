@@ -2,6 +2,7 @@ import { queryEmployeeOptions } from "@/api/_shared/employee-options";
 import { getMenu } from "@/api/navigation/get_menu";
 import { MainShell } from "@/components/layout/MainShell";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { toSessionEmployee } from "@/lib/auth/session-employee";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -15,7 +16,11 @@ export default async function MainLayout({ children }: { children: ReactNode }) 
     queryEmployeeOptions(),
   ]);
   return (
-    <MainShell menu={menu} employees={employees}>
+    <MainShell
+      menu={menu}
+      employees={employees}
+      sessionEmployee={toSessionEmployee(user)}
+    >
       {children}
     </MainShell>
   );

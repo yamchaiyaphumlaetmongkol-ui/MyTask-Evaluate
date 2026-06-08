@@ -9,11 +9,10 @@ export async function POST(request: Request) {
   const result = await changePasswordFromForm(newPassword, confirmPassword);
 
   if (!result.ok) {
-    return NextResponse.json(
-      { ok: false as const, error: result.error },
-      { status: 400 },
-    );
+    const url = new URL("/auth/change-password", request.url);
+    url.searchParams.set("error", result.error);
+    return NextResponse.redirect(url, 303);
   }
 
-  return NextResponse.json({ ok: true as const });
+  return NextResponse.redirect(new URL("/", request.url), 303);
 }

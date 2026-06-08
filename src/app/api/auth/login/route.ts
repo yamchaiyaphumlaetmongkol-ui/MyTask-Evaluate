@@ -13,28 +13,23 @@ export async function POST(request: Request) {
   const auth = await authenticateCredentials(username, password);
 
   if (!auth.ok) {
-    return NextResponse.json(
-      { ok: false as const, error: auth.error },
-      { status: 401 },
-    );
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("error", auth.error);
+    return NextResponse.redirect(loginUrl, 303);
   }
 
   try {
     const token = await createSessionForUser(auth.data.userId);
-    const response = NextResponse.json({
-      ok: true as const,
-      data: {
-        mustChangePassword: auth.data.mustChangePassword,
-        role: auth.data.role,
-      },
-    });
+    const target = auth.data.mustChangePassword
+      ? "/auth/change-password"
+      : "/";
+    const response = NextResponse.redirect(new URL(target, request.url), 303);
     attachSessionCookie(response, token);
     return response;
-  } catch {
-    console.error("POST /api/auth/login session failed");
-    return NextResponse.json(
-      { ok: false as const, error: "เข้าสู่ระบบไม่สำเร็จ" },
-      { status: 500 },
-    );
+  } catch (e) {
+    console.error("POST /api/auth/login session failed", e);
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("error", "เข้าสู่ระบบไม่สำเร็จ");
+    return NextResponse.redirect(loginUrl, 303);
   }
 }

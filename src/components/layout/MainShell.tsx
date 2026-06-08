@@ -1,27 +1,30 @@
 "use client";
 
 import { AppHeader } from "@/components/layout/AppHeader";
-import { AuthSessionSync } from "@/components/layout/AuthSessionSync";
+import { AuthSessionBootstrap } from "@/components/layout/AuthSessionBootstrap";
 import { CurrentUserScopeGuard } from "@/components/layout/CurrentUserScopeGuard";
 import { Sidebar } from "@/components/layout/Sidebar";
 import type { EmployeeOption } from "@/api/_shared/employee-options";
 import type { MenuConfig } from "@/api/navigation/types";
+import type { SessionEmployee } from "@/lib/auth/session-employee";
 import { Suspense, type ReactNode } from "react";
 
 interface MainShellProps {
   menu: MenuConfig;
   employees: EmployeeOption[];
+  sessionEmployee: SessionEmployee | null;
   children: ReactNode;
 }
 
 export function MainShell({
   menu,
   employees,
+  sessionEmployee,
   children,
 }: MainShellProps) {
   return (
     <div className="erp-app-frame d-flex flex-column flex-grow-1">
-      <AuthSessionSync />
+      <AuthSessionBootstrap employee={sessionEmployee} />
       <Suspense fallback={null}>
         <CurrentUserScopeGuard />
       </Suspense>

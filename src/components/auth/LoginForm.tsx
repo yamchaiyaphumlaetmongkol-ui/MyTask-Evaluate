@@ -2,50 +2,23 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 
-export function LoginForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+function LoginFormInner() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const formEl = e.currentTarget;
-    const form = new FormData(formEl);
-    formEl.reset();
-
+  useEffect(() => {
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        body: form,
-        credentials: "include",
-      });
-
-      const body = (await res.json()) as
-        | { ok: true; data: { mustChangePassword: boolean } }
-        | { ok: false; error: string };
-
-      if (!body.ok) {
-        setError(body.error ?? "เข้าสู่ระบบไม่สำเร็จ");
-        return;
-      }
-
-      const target = body.data.mustChangePassword
-        ? "/auth/change-password"
-        : "/";
-      window.location.assign(target);
+      localStorage.removeItem("erp-current-user");
     } catch {
-      setError("เข้าสู่ระบบไม่สำเร็จ");
-    } finally {
-      setLoading(false);
+      /* ignore */
     }
-  };
+  }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="card erp-panel border-0">
+    <form action="/api/auth/login" method="POST" className="card erp-panel border-0">
       <div className="card-body p-4">
         <h1 className="h4 erp-form-page-title mb-1">เข้าสู่ระบบ</h1>
         <p className="text-muted small mb-4">
@@ -75,10 +48,18 @@ export function LoginForm() {
           />
         </div>
 
-        <Button type="submit" variant="success" className="w-100" disabled={loading}>
-          {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+        <Button type="submit" variant="success" className="w-100">
+          เข้าสู่ระบบ
         </Button>
       </div>
     </form>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={null}>
+      <LoginFormInner />
+    </Suspense>
   );
 }

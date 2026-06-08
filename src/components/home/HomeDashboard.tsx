@@ -140,13 +140,35 @@ type LoadState =
   | { kind: "ready"; data: HomeDashboardSummary | null }
   | { kind: "error" };
 
-export function HomeDashboard() {
+type Props = {
+  employeeCode?: string | null;
+  employeeName?: string | null;
+  initialData?: HomeDashboardSummary | null;
+  loadError?: boolean;
+};
+
+export function HomeDashboard({
+  employeeCode: serverEmployeeCode,
+  employeeName: serverEmployeeName,
+  initialData,
+  loadError = false,
+}: Props) {
   const hydrated = useStoreHydrated();
-  const employeeCode = useCurrentUserStore((s) => s.employeeCode);
-  const employeeName = useCurrentUserStore((s) => s.employeeName);
-  const [loadState, setLoadState] = useState<LoadState>({ kind: "idle" });
+  const storeEmployeeCode = useCurrentUserStore((s) => s.employeeCode);
+  const storeEmployeeName = useCurrentUserStore((s) => s.employeeName);
+  const employeeCode = serverEmployeeCode ?? storeEmployeeCode;
+  const employeeName = serverEmployeeName ?? storeEmployeeName;
+
+  const serverLoaded = initialData !== undefined || loadError;
+
+  const [loadState, setLoadState] = useState<LoadState>(() => {
+    if (loadError) return { kind: "error" };
+    if (initialData !== undefined) return { kind: "ready", data: initialData };
+    return { kind: "idle" };
+  });
 
   useEffect(() => {
+    if (serverLoaded) return;
     if (!hydrated || !employeeCode) return;
 
     let cancelled = false;
@@ -169,14 +191,15 @@ export function HomeDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [employeeCode, hydrated]);
+  }, [employeeCode, hydrated, serverLoaded]);
 
   const rounds =
     loadState.kind === "ready" ? (loadState.data?.rounds ?? []) : [];
   const groupedByYear = useMemo(() => groupRoundsByYear(rounds), [rounds]);
 
   const loading =
-    !hydrated || (Boolean(employeeCode) && loadState.kind === "loading");
+    !serverLoaded &&
+    (!hydrated || (Boolean(employeeCode) && loadState.kind === "loading"));
 
   if (loading) {
     return (
@@ -199,13 +222,17 @@ export function HomeDashboard() {
   if (!employeeCode) {
     return (
       <ErpAlert variant="warning">
-        กรุณาเลือกผู้ใช้งานที่แถบด้านซ้ายเพื่อดูแดชบอร์ดผลการประเมินของคุณ
+        บัญชีนี้ยังไม่ผูกกับข้อมูลพนักงาน — ติดต่อผู้ดูแลระบบ
       </ErpAlert>
     );
   }
 
   if (loadState.kind === "error") {
-    return <ErpAlert>ไม่สามารถโหลดแดชบอร์ดได้</ErpAlert>;
+    return (
+      <ErpAlert variant="danger">
+        ไม่สามารถโหลดแดชบอร์ดได้ — ลองรีเฟรชหน้าหรือติดต่อผู้ดูแลระบบ
+      </ErpAlert>
+    );
   }
 
   const data = loadState.kind === "ready" ? loadState.data : null;
