@@ -49,7 +49,7 @@ export function ProfileBindingCard({
         <dt className="col-sm-4 text-muted">พนักงานที่ผูก</dt>
         <dd className="col-sm-8">
           {isAdmin && !employeeName ? (
-            <span className="text-muted">— (บัญชี admin ไม่ผูกพนักงาน)</span>
+            <span className="text-muted">— (บัญชี admin ไม่ผูกพนักงาน )</span>
           ) : employeeName ? (
             <>
               {employeeName}
