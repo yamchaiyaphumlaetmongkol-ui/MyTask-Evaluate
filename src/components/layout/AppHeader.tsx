@@ -45,9 +45,11 @@ export function AppHeader() {
 
         <div className="d-flex align-items-center flex-shrink-0 ms-auto gap-2">
           <EvalNotificationBell />
-          <Link href="/auth/logout" className="btn btn-outline-secondary btn-sm">
-            ออกจากระบบ
-          </Link>
+          <form action="/auth/logout" method="post" style={{ display: "inline" }}>
+            <button type="submit" className="btn btn-outline-secondary btn-sm">
+              ออกจากระบบ
+            </button>
+          </form>
         </div>
       </header>
     </>
