@@ -69,19 +69,22 @@ npm run dev       # http://localhost:3000
 
 ## ติดตั้ง Database
 
-รัน SQL scripts ตามลำดับใน `script/sql/`:
+### Fresh Install (clone ใหม่ — ใช้ไฟล์นี้ไฟล์เดียว)
 
 ```bash
-# ติดตั้งครั้งแรก
-psql $DATABASE_URL -f script/sql/00_install.sql
-
-# อัปเกรด (เรียงตามเลข)
-psql $DATABASE_URL -f script/sql/01_alter_pe_created_by.sql
-# ... ต่อจนถึง
-psql $DATABASE_URL -f script/sql/17_upgrade_app_auth.sql
+psql "$DATABASE_URL" -f script/sql/install_fresh.sql
 ```
 
-> ไฟล์ `17_upgrade_app_auth.sql` สร้างตาราง `app_user_auth` และ `app_session` ที่จำเป็นสำหรับระบบ login
+สร้างทุกตารางในครั้งเดียว (`IF NOT EXISTS` รันซ้ำได้ปลอดภัย) พร้อม seed data role/position ตัวอย่าง
+
+> บัญชี `admin` จะถูกสร้างอัตโนมัติ **เมื่อ login ครั้งแรก** ไม่ต้องรัน SQL เพิ่ม
+
+### รีเซ็ตทุกอย่าง (dev เท่านั้น)
+
+```bash
+psql "$DATABASE_URL" -f script/sql/99_drop.sql
+psql "$DATABASE_URL" -f script/sql/install_fresh.sql
+```
 
 ---
 
