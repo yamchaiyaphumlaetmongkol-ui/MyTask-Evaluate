@@ -1,47 +1,114 @@
-# Evaluate — ERP (Program-Driven)
+# MyPerformanceV2 — ระบบประเมินผลงาน
 
-Next.js 16 App Router + Bootstrap 5 สำหรับระบบประเมินผลงานหลายโมดูล (**PM / PE / ESS**)
-
-**สถานะปัจจุบัน:** โครง shell + เมนู + routing พร้อมแล้ว — Server Actions และ DB ยังเป็น placeholder
+Next.js 16 · Bootstrap 5 · Prisma · PostgreSQL (Neon) · Deploy บน Vercel
 
 ---
 
-## เริ่มต้น
+## เข้าสู่ระบบครั้งแรก
+
+| ช่อง           | ค่า          |
+| -------------- | ------------ |
+| **ชื่อผู้ใช้** | `admin`      |
+| **รหัสผ่าน**   | `Admin1234*` |
+
+> **หมายเหตุ:** บัญชี `admin` เป็น super-user ไม่ผูกกับพนักงาน ใช้สำหรับจัดการระบบ
+> พนักงานทั่วไปใช้ **อีเมล ClickUp** เป็น username และ `P@ssword` เป็นรหัสผ่านเริ่มต้น (ระบบจะบังคับเปลี่ยนรหัสผ่านเมื่อ login ครั้งแรก)
+
+---
+
+## Environment Variables
+
+สร้างไฟล์ `.env.local` แล้วใส่ค่าตามนี้:
+
+```env
+# Database (Prisma) — ใช้ pooled URL จาก Neon
+DATABASE_URL='postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require'
+
+# Session secret — สำหรับ sign cookie (บังคับบน production)
+# สร้างด้วย: node -e "require('crypto').randomBytes(32).toString('base64')|0" หรือ openssl rand -base64 32
+SESSION_SECRET='your-random-secret-here'
+
+# ClickUp API
+CLICKUP_API_TOKEN="pk_xxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxx"
+CLICKUP_TEAM_ID="9xxxxxxxxx"
+```
+
+### วิธีหา ClickUp API Token
+
+1. เปิด **ClickUp** → คลิกรูปโปรไฟล์มุมซ้ายล่าง
+2. เลือก **Settings**
+3. เลื่อนลงหา **Apps** ในเมนูซ้าย
+4. คลิก **Generate** ใต้หัวข้อ **API Token**
+5. Copy token ที่ขึ้นต้นด้วย `pk_`
+
+### วิธีหา ClickUp Team ID
+
+1. เปิด ClickUp → เลือก Workspace ที่ต้องการ
+2. ดู URL: `https://app.clickup.com/**9xxxxxxxxx**/...` — ตัวเลขนั้นคือ Team ID
+3. หรือไปที่ Settings → Workspace → ดูใน URL
+
+---
+
+## รัน Local
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # ตรวจ TypeScript + static generation ก่อน merge
+npm run dev       # http://localhost:3000
 ```
 
-| คำสั่ง | ใช้เมื่อ |
-|--------|---------|
-| `npm run db:generate` | แก้ `prisma/schema.prisma` แล้ว generate client |
-| `npm run db:push` | sync schema ไป PostgreSQL (dev เท่านั้น) |
-| `npm run lint` | ก่อน commit |
+**ก่อนรัน:** ต้องมี `.env.local` + ฐานข้อมูลมี tables ครบ (ดู [ติดตั้ง Database](#ติดตั้ง-database))
 
-**Prisma:** ต้องมี `DATABASE_URL` ใน `.env` ก่อนรัน db commands — ยังไม่ถูกเรียกจากหน้าจอ
+| คำสั่ง                | ใช้เมื่อ                                        |
+| --------------------- | ----------------------------------------------- |
+| `npm run build`       | ตรวจ TypeScript + build ก่อน deploy             |
+| `npm run lint`        | ก่อน commit                                     |
+| `npm run db:generate` | แก้ `prisma/schema.prisma` แล้ว generate client |
+| `npm run db:push`     | sync schema ไป DB (dev เท่านั้น)                |
 
 ---
 
-## สถาปัตยกรรม (ตัดสินใจแล้ว)
+## ติดตั้ง Database
 
-### หลัก: หนึ่งจอ = สามที่ (ต้องตรงชื่อ)
+รัน SQL scripts ตามลำดับใน `script/sql/`:
 
-| ชั้น | ที่อยู่ | หน้าที่ |
-|------|---------|--------|
-| **Route** | `src/app/(main)/{module}/{screen}/page.tsx` | UI เท่านั้น — เรียก Server Action, ไม่มี business logic |
-| **Logic** | `src/api/{module}/{screen}/` | `get_*.ts`, `save_*.ts`, `types.ts` — domain + data |
-| **เมนู** | `src/data/menu.json` | แถว flat → tree ใน sidebar (`getMenu`) |
+```bash
+# ติดตั้งครั้งแรก
+psql $DATABASE_URL -f script/sql/00_install.sql
 
-**Trade-off:** ต้อง sync 3 จุดด้วยมือ — **ได้ความชัดเจนและค้นหาง่าย** ไม่ต้องพึ่ง code-gen  
-**Risk:** ลืมเพิ่มแถวใน `menu.json` → หน้าเปิดได้แต่ไม่ขึ้นเมนู / `favorites.json` ชี้ `menuId` ผิด → ไม่แสดงในรายการโปรด
+# อัปเกรด (เรียงตามเลข)
+psql $DATABASE_URL -f script/sql/01_alter_pe_created_by.sql
+# ... ต่อจนถึง
+psql $DATABASE_URL -f script/sql/17_upgrade_app_auth.sql
+```
 
-### สิ่งที่ไม่ทำ (ตอนนี้)
+> ไฟล์ `17_upgrade_app_auth.sql` สร้างตาราง `app_user_auth` และ `app_session` ที่จำเป็นสำหรับระบบ login
 
-- Login / session / middleware auth
-- REST `app/api/*` สำหรับ domain (ใช้ Server Actions ใน `src/api/` เท่านั้น)
-- Tailwind สำหรับ UI ใหม่ (Bootstrap 5 + `globals.css` เท่านั้น)
+---
+
+## Deploy บน Vercel
+
+1. Push โค้ดขึ้น GitHub
+2. Import project ใน [vercel.com](https://vercel.com)
+3. ตั้ง **Environment Variables** ใน Vercel Dashboard:
+
+| Key                 | ค่า                                  |
+| ------------------- | ------------------------------------ |
+| `DATABASE_URL`      | Neon pooled URL + `?sslmode=require` |
+| `SESSION_SECRET`    | random string 32+ bytes              |
+| `CLICKUP_API_TOKEN` | `pk_xxxxx` จาก ClickUp Settings      |
+| `CLICKUP_TEAM_ID`   | Team ID จาก ClickUp URL              |
+
+4. Deploy → ระบบจะรัน `prisma generate && next build` อัตโนมัติ
+
+---
+
+## โมดูล
+
+| Module                 | Path                         | ใช้งาน                                  |
+| ---------------------- | ---------------------------- | --------------------------------------- |
+| **PM** — ข้อมูลพนักงาน | `/pm/pmms01`–`pmms04`        | จัดการพนักงาน, roles, ตำแหน่ง           |
+| **PE** — แบบประเมิน    | `/pe/pems01`–`pems02`        | สร้างและจัดการแบบประเมิน                |
+| **ESS** — บริการตนเอง  | `/ess/esspets01`–`esspets04` | ประเมินตนเอง, ติดตาม, ผู้จัดการให้คะแนน |
 
 ---
 
@@ -49,105 +116,26 @@ npm run build    # ตรวจ TypeScript + static generation ก่อน merg
 
 ```
 src/
-├── app/
-│   ├── layout.tsx, page.tsx, loading.tsx   # หน้าแรก / โหลดเต็มจอ
-│   ├── globals.css                         # ERP theme + Bootstrap import
-│   └── (main)/
-│       ├── layout.tsx                      # getMenu() → MainShell
-│       ├── loading.tsx                     # loading.gif ใน content area
-│       ├── pm/   pmms01 … pmms04
-│       ├── pe/   pems01, pems02
-│       └── ess/  esspets01 … esspets04
-├── api/
-│   ├── navigation/                         # get_menu, build tree, favorites
-│   ├── pm/, pe/, ess/                      # placeholder Server Actions
-│   └── (screen)/types.ts, get_*.ts, save_*.ts
-├── data/
-│   ├── menu.json                           # แหล่งเมนู (mock DB)
-│   ├── favorites.json                      # รายการโปรด (อ้าง menuId)
-│   └── README.md                           # schema แถวเมนู/โปรด
-├── components/
-│   ├── layout/   AppHeader, Sidebar, MainShell, …
-│   ├── ui/       Button, Input, Modal, AppLoading
-│   ├── shared/   BaseTable, FilterBar
-│   └── providers/ BootstrapScripts
-├── store/        sidebarStore (persist), taskFilterStore
-└── lib/          app-config, navigation helpers, api-clients
-public/
-  loading.gif, logo*.png/gif
-prisma/schema.prisma   # User, Employee — ยังไม่เชื่อมหน้าจอ
+├── app/(main)/{module}/{screen}/page.tsx   # Server Component ต่อจอ
+├── api/{module}/{screen}/
+│   ├── _queries.ts                         # อ่าน DB (ไม่มี "use server")
+│   ├── save_*.ts                           # mutate + revalidatePath
+│   └── types.ts
+├── components/{module}/                    # UI Components
+├── lib/auth/                               # session, password, signed-token
+├── data/menu.json                          # นิยามเมนู sidebar
+└── data/favorites.json                     # รายการโปรด
+prisma/schema.prisma                        # Database schema
+script/sql/                                 # Migration scripts
 ```
 
 ---
 
-## Navigation
+## สำหรับนักพัฒนา
 
-| แหล่ง | ไฟล์ | โหลดที่ |
-|-------|------|---------|
-| เมนูหลัก | `src/data/menu.json` | `(main)/layout.tsx` → `getMenu()` |
-| รายการโปรด | `src/data/favorites.json` | รวมใน `getMenu()` → `menu.favorites` |
-| Sidebar state | `sidebarStore` (localStorage) | หุบ sidebar / กาง folder / แท็บเมนู |
+- อ่าน **[AGENTS.md](./AGENTS.md)** — กฎโปรเจกต์, directory conventions, ห้ามทำอะไร
+- อ่าน **[docs/THEME.md](./docs/THEME.md)** — สี, ปุ่ม, panel
+- อ่าน **[docs/UI-STANDARDS.md](./docs/UI-STANDARDS.md)** — โครงสร้างหน้า, field, ตาราง
 
-**พฤติกรรม folder:** `type: "folder"` + `path: null` → กดแล้วหุบ/กางลูกเท่านั้น ไม่ navigate  
-**รายละเอียดคอลัมน์:** ดู `src/data/README.md`
-
----
-
-## Routes ปัจจุบัน
-
-| Module | Screens (มี `page.tsx`) |
-|--------|-------------------------|
-| `/` | หน้าแรก (อยู่นอก `(main)` แต่ใช้ `MainShell` เหมือนกัน) |
-| PM | `pmms01`–`pmms04` |
-| PE | `pems01`, `pems02` |
-| ESS | `esspets01`–`esspets04` |
-
----
-
-## เพิ่มจอใหม่ (checklist)
-
-1. **`menu.json`** — แถว `type: "page"`, `path: "/{module}/{screen}"`, `parentId` ชี้ folder
-2. **`src/app/(main)/{module}/{screen}/page.tsx`** — shell ว่างหรือฟอร์ม
-3. **`src/api/{module}/{screen}/`** — `types.ts`, `get_*.ts`, `save_*.ts` (เมื่อมี logic)
-4. **(ถ้าต้องการ)** แถวใน `favorites.json` ด้วย `menuId` = `id` ในเมนู
-5. **`npm run build`** — จับ path ผิด / type พัง
-
-**Screen code ต้องตรงกันทุกที่** — ตัวอย่าง: `esspets03` ไม่ใช่ `esspmts03` ใน path หรือโฟลเดอร์ `api/`
-
----
-
-## UI & Loading
-
-- **Bootstrap 5** + **Bootstrap Icons** — import ใน `globals.css`, JS ผ่าน `BootstrapScripts`
-- **Loading:** `public/loading.gif` ผ่าน `AppLoading` + `app/loading.tsx`, `app/(main)/loading.tsx`
-- **Theme:** CSS variables ใน `globals.css` (`--erp-green-*`)
-
----
-
-## State (Zustand)
-
-| Store | Persist | ใช้กับ |
-|-------|---------|--------|
-| `sidebarStore` | ใช่ (collapsed, expanded folders) | Sidebar, Header |
-| `taskFilterStore` | ตาม implementation | ESS filter (เมื่อ implement) |
-
-**Risk:** ค่าจาก `localStorage` ทำให้ hydration warning ได้ — layout ใส่ `suppressHydrationWarning` ที่ `<body>` แล้ว; extension เบราว์เซอร์ (เช่น `cz-shortcut-listen`) ก็ทำให้เกิด warning ได้
-
----
-
-## Tech debt ที่รู้ (ควรแก้ก่อน implement จริง)
-
-| ปัญหา | แนะนำ |
-|--------|--------|
-| `src/api/ess/esspmts*` ไม่ตรง `app/.../esspets*` | เปลี่ยนชื่อโฟลเดอร์ `api` ให้ตรง `esspets{NN}` |
-| `favorites.json` มี `esspmts01` | แก้เป็น `esspets01` (หรือ id ที่มีใน menu) |
-| `api/pe/pems03` มีแต่ไม่มี route/menu | ลบหรือเพิ่มหน้า + menu ให้ครบ |
-| Server Actions ทุกไฟล์เป็น `export {}` | implement ทีละจอเมื่อมี schema จริง |
-
----
-
-## สำหรับ Agent / นักพัฒนา
-
-อ่าน **[AGENTS.md](./AGENTS.md)** — กฎ hard/soft, template Server Action, สิ่งที่ห้ามทำ
-
-**Next.js 16:** มี breaking changes จากเวอร์ชันเก่า — อ่าน `node_modules/next/dist/docs/` ก่อนใช้ API ใหม่
+**Next.js 16** มี breaking changes — อ่าน `node_modules/next/dist/docs/` ก่อนใช้ API ใหม่  
+**Middleware** ถูก rename เป็น `proxy.ts` ใน Next.js 16 (`src/proxy.ts`)
