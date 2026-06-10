@@ -1,4 +1,5 @@
 import { SESSION_COOKIE } from "@/lib/auth/constants";
+import { verifySignedSessionValue } from "@/lib/auth/signed-session";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -12,7 +13,8 @@ function isPublicPath(pathname: string): boolean {
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
+  const token = req.cookies.get(SESSION_COOKIE)?.value ?? "";
+  const hasSession = Boolean(token && verifySignedSessionValue(token));
 
   if (pathname.startsWith("/auth/change-password")) {
     if (!hasSession) {

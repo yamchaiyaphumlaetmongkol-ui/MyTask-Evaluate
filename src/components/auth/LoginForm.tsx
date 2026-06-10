@@ -8,6 +8,7 @@ import { Suspense, useEffect } from "react";
 function LoginFormInner() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const from = searchParams.get("from") ?? "";
 
   useEffect(() => {
     try {
@@ -25,6 +26,7 @@ function LoginFormInner() {
           ใช้อีเมล ClickUp เป็นชื่อผู้ใช้
         </p>
 
+        {from && <input type="hidden" name="from" value={from} />}
         {error && (
           <div className="alert alert-danger py-2 small">{error}</div>
         )}

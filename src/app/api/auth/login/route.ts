@@ -9,6 +9,9 @@ export async function POST(request: Request) {
   const form = await request.formData();
   const username = String(form.get("username") ?? "");
   const password = String(form.get("password") ?? "");
+  const rawFrom = String(form.get("from") ?? "");
+  const safeFrom =
+    rawFrom.startsWith("/") && !rawFrom.startsWith("//") ? rawFrom : "/";
 
   const auth = await authenticateCredentials(username, password);
 
@@ -22,7 +25,7 @@ export async function POST(request: Request) {
     const token = await createSessionForUser(auth.data.userId);
     const target = auth.data.mustChangePassword
       ? "/auth/change-password"
-      : "/";
+      : safeFrom;
     const response = NextResponse.redirect(new URL(target, request.url), 303);
     attachSessionCookie(response, token);
     return response;

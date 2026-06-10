@@ -8,7 +8,8 @@ import type { ReactNode } from "react";
 
 export default async function MainLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/login");
+  // redirect ไป logout แทน login โดยตรง เพื่อให้ clear cookie ก่อน (ป้องกัน redirect loop)
+  if (!user) redirect("/auth/logout");
   if (user.mustChangePassword) redirect("/auth/change-password");
 
   const [menu, employees] = await Promise.all([
